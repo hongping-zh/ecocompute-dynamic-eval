@@ -302,24 +302,78 @@ export const Calculator: React.FC = () => {
     setShowChart('compare');
   };
 
-  // 导出为 JSON
+  // 导出为 JSON（预埋 Decision Trace 数据结构，为未来智能路由做准备）
   const exportConfig = () => {
+    // 构建候选模型评分（基于月成本倒数归一化）
+    const candidateModels = Object.keys(API_PRICING) as (keyof typeof API_PRICING)[];
+    const costs = candidateModels.map(k => {
+      const p = API_PRICING[k];
+      return (((state.tokensPerDay || 100000) / 1000000) * ((p.input + p.output) / 2)) * 30;
+    });
+    const maxCost = Math.max(...costs);
+    const scoring: Record<string, number> = {};
+    candidateModels.forEach((k, i) => {
+      scoring[k] = maxCost > 0 ? parseFloat((1 - costs[i] / maxCost).toFixed(3)) : 0;
+    });
+
     const exportData = {
-      config: state,
-      compareConfig: compareState,
-      result: {
-        co2_kg: results.co2,
-        kwh: results.kwh,
-        dailyCost: results.dailyCost,
-        monthlyCost: results.monthlyCost
+      schema_version: '0.2.0',
+
+      // 1️⃣ Task Context
+      task_context: {
+        task_type: 'cost_comparison',
+        hardware: state.hardware,
+        gpu_count: state.count,
+        runtime_hours: state.hours,
+        pue: state.pue,
+        tokens_per_day: state.tokensPerDay || 100000,
+        constraints: {
+          max_monthly_budget: null,
+          max_latency_ms: null
+        }
       },
+
+      // 2️⃣ Decision Trace
+      decision_trace: {
+        candidate_models: candidateModels,
+        scoring,
+        selected_model: state.apiModel || 'deepseek-v3',
+        compare_model: compareState?.apiModel || null,
+        policy_version: 'manual_v1'
+      },
+
+      // 3️⃣ Outcome
+      outcome: {
+        plan_a: {
+          model: state.apiModel,
+          daily_cost_usd: results.dailyCost,
+          monthly_cost_usd: results.monthlyCost,
+          co2_kg_per_day: results.co2,
+          kwh_per_day: results.kwh
+        },
+        plan_b: compareState && compareResults ? {
+          model: compareState.apiModel,
+          daily_cost_usd: compareResults.dailyCost,
+          monthly_cost_usd: compareResults.monthlyCost,
+          co2_kg_per_day: compareResults.co2,
+          kwh_per_day: compareResults.kwh
+        } : null,
+        savings: compareResults ? {
+          monthly_usd: Math.abs(results.monthlyCost - compareResults.monthlyCost),
+          percentage: compareResults.monthlyCost > 0 
+            ? parseFloat(((1 - results.monthlyCost / compareResults.monthlyCost) * 100).toFixed(1))
+            : 0
+        } : null,
+        user_feedback: null
+      },
+
       timestamp: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ecocompute-comparison-${Date.now()}.json`;
+    a.download = `ecocompute-trace-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
