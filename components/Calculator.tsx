@@ -4,59 +4,73 @@ import { HARDWARE_OPTIONS } from '../constants';
 import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Copy, Sparkles, GitCompare, X } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-// API 成本数据 ($/1M tokens)
+// API 成本数据 ($/1M tokens) - 2026年2月最新价格
 const API_PRICING = {
-  'deepseek-v3': { input: 0.27, output: 1.10, name: 'DeepSeek-V3 (671B)' },
-  'deepseek-v3-lite': { input: 0.07, output: 0.28, name: 'DeepSeek-V3-Lite' },
-  'gpt-4o': { input: 2.50, output: 10.00, name: 'GPT-4o' },
-  'gpt-4o-mini': { input: 0.15, output: 0.60, name: 'GPT-4o-mini' },
-  'claude-3.5-sonnet': { input: 3.00, output: 15.00, name: 'Claude 3.5 Sonnet' },
-  'gemini-1.5-flash': { input: 0.075, output: 0.30, name: 'Gemini 1.5 Flash' },
+  'deepseek-v3': { input: 0.27, output: 1.10, name: 'DeepSeek-V3 (671B)', desc: '满血版 MoE 架构' },
+  'deepseek-v3-lite': { input: 0.07, output: 0.28, name: 'DeepSeek-V3-Lite', desc: '蒸馏版，性价比之王' },
+  'deepseek-r1': { input: 0.55, output: 2.19, name: 'DeepSeek-R1', desc: '推理增强版' },
+  'gpt-4o': { input: 2.50, output: 10.00, name: 'GPT-4o', desc: 'OpenAI 旗舰' },
+  'gpt-4o-mini': { input: 0.15, output: 0.60, name: 'GPT-4o-mini', desc: 'OpenAI 轻量版' },
+  'claude-3.5-sonnet': { input: 3.00, output: 15.00, name: 'Claude 3.5 Sonnet', desc: 'Anthropic 旗舰' },
+  'gemini-1.5-flash': { input: 0.075, output: 0.30, name: 'Gemini 1.5 Flash', desc: 'Google 快速版' },
+  'gemini-2.0-flash': { input: 0.10, output: 0.40, name: 'Gemini 2.0 Flash', desc: 'Google 最新版' },
 };
 
-// 预设模板库
+// 预设模板库 - DeepSeek 主推案例在最前
 const PRESET_TEMPLATES = [
+  // ⭐ 主推案例：DeepSeek API 成本计算
   {
-    id: 'deepseek-compare',
-    name: '🔥 DeepSeek V3 vs Lite',
-    description: 'Compare full vs distilled model costs',
+    id: 'deepseek-api-cost',
+    name: '⭐ DeepSeek API 成本计算器',
+    description: '计算 DeepSeek V3 满血版 vs 蒸馏版的真实成本差异',
     config: { hardware: 'rtx5090', count: 1, hours: 24, pue: 1.2, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'deepseek-v3-lite',
-    tokensPerDay: 1000000
+    tokensPerDay: 1000000,
+    featured: true
   },
   {
-    id: 'gpt-vs-deepseek',
-    name: '⚔️ GPT-4o vs DeepSeek-V3',
-    description: 'Premium vs budget model showdown',
+    id: 'deepseek-vs-gpt',
+    name: '🔥 DeepSeek vs GPT-4o 成本对比',
+    description: '同等质量下，DeepSeek 能省多少钱？',
     config: { hardware: 'a100', count: 1, hours: 24, pue: 1.2, region: 'global' },
-    apiModel: 'gpt-4o',
-    compareModel: 'deepseek-v3',
+    apiModel: 'deepseek-v3',
+    compareModel: 'gpt-4o',
     tokensPerDay: 500000
   },
   {
-    id: 'personal-carbon',
-    name: '🌱 Personal AI Carbon Footprint',
-    description: 'Estimate your daily AI usage impact',
-    config: { hardware: 't4', count: 1, hours: 8, pue: 1.2, region: 'global' }
+    id: 'deepseek-r1-compare',
+    name: '🧠 DeepSeek-R1 推理版成本',
+    description: 'R1 推理增强版 vs 标准 V3 版本',
+    config: { hardware: 'h100', count: 1, hours: 24, pue: 1.1, region: 'global' },
+    apiModel: 'deepseek-r1',
+    compareModel: 'deepseek-v3',
+    tokensPerDay: 200000
   },
   {
-    id: 'startup-inference',
-    name: '🚀 Startup Inference Server',
-    description: 'Small-scale production deployment',
-    config: { hardware: 'a100', count: 2, hours: 24, pue: 1.3, region: 'global' }
+    id: 'startup-api-budget',
+    name: '🚀 创业公司 API 预算',
+    description: '日均 100 万 tokens 的月度成本估算',
+    config: { hardware: 'a100', count: 2, hours: 24, pue: 1.3, region: 'global' },
+    apiModel: 'deepseek-v3-lite',
+    tokensPerDay: 1000000
   },
   {
-    id: 'research-training',
-    name: '🔬 Research Training Job',
-    description: 'Multi-GPU training workload',
-    config: { hardware: 'h100', count: 8, hours: 72, pue: 1.1, region: 'global' }
+    id: 'enterprise-scale',
+    name: '🏢 企业级大规模调用',
+    description: '日均 1000 万 tokens 的成本对比',
+    config: { hardware: 'h100', count: 8, hours: 24, pue: 1.2, region: 'global' },
+    apiModel: 'deepseek-v3',
+    compareModel: 'claude-3.5-sonnet',
+    tokensPerDay: 10000000
   },
   {
-    id: 'enterprise-cluster',
-    name: '🏢 Enterprise AI Cluster',
-    description: 'Large-scale enterprise deployment',
-    config: { hardware: 'rtx5090', count: 16, hours: 168, pue: 1.4, region: 'global' }
+    id: 'personal-dev',
+    name: '👨‍💻 个人开发者日常',
+    description: '轻度使用场景的月度成本',
+    config: { hardware: 't4', count: 1, hours: 8, pue: 1.2, region: 'global' },
+    apiModel: 'gemini-1.5-flash',
+    tokensPerDay: 50000
   }
 ];
 
@@ -73,6 +87,27 @@ interface ExtendedState extends CalculatorState {
 
 export const Calculator: React.FC = () => {
   // 从本地存储加载初始状态
+  // 默认加载 DeepSeek 主推案例
+  const getDefaultState = (): ExtendedState => ({
+    hardware: 'rtx5090', 
+    count: 1, 
+    hours: 24, 
+    pue: 1.2, 
+    region: 'global', 
+    tokensPerDay: 1000000, 
+    apiModel: 'deepseek-v3'
+  });
+
+  const getDefaultCompareState = (): ExtendedState => ({
+    hardware: 'rtx5090', 
+    count: 1, 
+    hours: 24, 
+    pue: 1.2, 
+    region: 'global', 
+    tokensPerDay: 1000000, 
+    apiModel: 'deepseek-v3-lite'
+  });
+
   const loadSavedState = (): ExtendedState => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -80,11 +115,12 @@ export const Calculator: React.FC = () => {
     } catch (e) {
       console.warn('Failed to load saved calculator state');
     }
-    return { hardware: 'rtx5090', count: 1, hours: 24, pue: 1.2, region: 'global', tokensPerDay: 100000, apiModel: 'deepseek-v3' };
+    return getDefaultState();
   };
 
   const [state, setState] = useState<ExtendedState>(loadSavedState);
-  const [compareState, setCompareState] = useState<ExtendedState | null>(null);
+  // 默认启用对比模式，展示 DeepSeek V3 vs Lite
+  const [compareState, setCompareState] = useState<ExtendedState | null>(getDefaultCompareState);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showChart, setShowChart] = useState<'pie' | 'bar' | 'compare' | null>('compare');
   const [configCollapsed, setConfigCollapsed] = useState(false);
@@ -145,10 +181,11 @@ export const Calculator: React.FC = () => {
     setShowChart('compare');
   };
 
-  // 重置为默认值
+  // 重置为默认值（DeepSeek 主推案例）
   const resetToDefault = () => {
-    setState({ hardware: 'rtx5090', count: 1, hours: 24, pue: 1.2, region: 'global', tokensPerDay: 100000, apiModel: 'deepseek-v3' });
-    setCompareState(null);
+    setState(getDefaultState());
+    setCompareState(getDefaultCompareState());
+    setShowChart('compare');
   };
 
   // 导出为 JSON
