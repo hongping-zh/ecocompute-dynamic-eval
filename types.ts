@@ -24,5 +24,7 @@ export type SortDirection = 'asc' | 'desc';
 export enum AppView {
   CALCULATOR = 'CALCULATOR',
   LEADERBOARD = 'LEADERBOARD',
-  MONITOR = 'MONITOR'
+  MONITOR = 'MONITOR',
+  METHODOLOGY = 'METHODOLOGY',
+  DEEPSEEK_VS_GPT = 'DEEPSEEK_VS_GPT'
 }

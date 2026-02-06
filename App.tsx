@@ -1,15 +1,69 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppView } from './types';
 import { Calculator } from './components/Calculator';
 import { Leaderboard } from './components/Leaderboard';
 import { AudioMonitor } from './components/AudioMonitor';
 import { SettingsPanel, ApiConfig, loadApiConfig } from './components/SettingsPanel';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github } from 'lucide-react';
+import { Methodology } from './components/Methodology';
+import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [apiConfig, setApiConfig] = useState<ApiConfig>(loadApiConfig);
+  const shouldSyncUrlRef = useRef(false);
+
+  const navigateToView = (next: AppView) => {
+    shouldSyncUrlRef.current = true;
+    setView(next);
+  };
+
+  const setUrlParams = (params: URLSearchParams) => {
+    const next = params.toString();
+    const url = next ? `${window.location.pathname}?${next}` : window.location.pathname;
+    window.history.replaceState(null, '', url);
+  };
+
+  const openCalculatorTemplate = (templateId: string) => {
+    shouldSyncUrlRef.current = true;
+    setView(AppView.CALCULATOR);
+    const params = new URLSearchParams(window.location.search);
+    params.set('view', AppView.CALCULATOR);
+    params.set('template', templateId);
+    params.delete('data');
+    setUrlParams(params);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    shouldSyncUrlRef.current = params.has('view') || params.has('template') || params.has('data');
+
+    if (params.has('data')) {
+      setView(AppView.CALCULATOR);
+      return;
+    }
+
+    const viewParam = params.get('view');
+    if (viewParam && (Object.values(AppView) as string[]).includes(viewParam)) {
+      setView(viewParam as AppView);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!shouldSyncUrlRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    params.set('view', view);
+
+    if (view !== AppView.CALCULATOR) {
+      params.delete('template');
+      params.delete('data');
+    }
+
+    setUrlParams(params);
+  }, [view]);
 
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900 font-sans">
@@ -24,7 +78,7 @@ const App: React.FC = () => {
 
         <nav className="flex-1 py-6 px-3 space-y-2">
           <button 
-            onClick={() => setView(AppView.LEADERBOARD)}
+            onClick={() => navigateToView(AppView.LEADERBOARD)}
             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.LEADERBOARD ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
           >
             <LayoutGrid className="w-5 h-5 flex-shrink-0" />
@@ -32,7 +86,7 @@ const App: React.FC = () => {
           </button>
 
            <button 
-            onClick={() => setView(AppView.MONITOR)}
+            onClick={() => navigateToView(AppView.MONITOR)}
             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.MONITOR ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
           >
             <Activity className="w-5 h-5 flex-shrink-0" />
@@ -40,11 +94,27 @@ const App: React.FC = () => {
           </button>
 
           <button 
-            onClick={() => setView(AppView.CALCULATOR)}
+            onClick={() => navigateToView(AppView.CALCULATOR)}
             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.CALCULATOR ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
           >
             <CalcIcon className="w-5 h-5 flex-shrink-0" />
             <span className="hidden lg:block font-medium">Calculator</span>
+          </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.DEEPSEEK_VS_GPT)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.DEEPSEEK_VS_GPT ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <Scale className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">DeepSeek vs GPT</span>
+          </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.METHODOLOGY)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.METHODOLOGY ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <BookOpen className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Methodology</span>
           </button>
         </nav>
 
@@ -80,11 +150,15 @@ const App: React.FC = () => {
                     {view === AppView.LEADERBOARD && 'Model Evaluations'}
                     {view === AppView.MONITOR && 'System Monitor'}
                     {view === AppView.CALCULATOR && 'Emissions Calculator'}
+                    {view === AppView.DEEPSEEK_VS_GPT && 'DeepSeek vs GPT'}
+                    {view === AppView.METHODOLOGY && 'Methodology & Data Sources'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
                     {view === AppView.MONITOR && 'Real-time energy and audio processing visualization.'}
                     {view === AppView.CALCULATOR && 'Estimate carbon footprint for training runs.'}
+                    {view === AppView.DEEPSEEK_VS_GPT && 'A practical workflow to compare cost and carbon impact for your workload.'}
+                    {view === AppView.METHODOLOGY && 'How the metrics are measured and how estimates are derived.'}
                 </p>
             </div>
             
@@ -93,9 +167,13 @@ const App: React.FC = () => {
                     <span className="text-sm font-semibold text-slate-700">Weights & Biases Style</span>
                     <span className="text-xs text-eco-600 font-medium">Eco-Mode Active</span>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                    <img src="https://picsum.photos/100/100" alt="User" className="w-full h-full object-cover" />
-                </div>
+                <a
+                  href="mailto:hello@ecocompute.ai?subject=EcoCompute%20Waitlist"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-medium"
+                >
+                  <Mail className="w-4 h-4" />
+                  Join Waitlist
+                </a>
             </div>
         </header>
 
@@ -104,6 +182,8 @@ const App: React.FC = () => {
             {view === AppView.LEADERBOARD && <Leaderboard apiConfig={apiConfig} />}
             {view === AppView.MONITOR && <AudioMonitor />}
             {view === AppView.CALCULATOR && <Calculator />}
+            {view === AppView.DEEPSEEK_VS_GPT && <DeepSeekVsGpt onOpenCalculator={() => openCalculatorTemplate('deepseek-vs-gpt')} />}
+            {view === AppView.METHODOLOGY && <Methodology />}
         </div>
       </main>
 

@@ -7,8 +7,8 @@ import { ApiConfig } from './SettingsPanel';
 
 // Helper for heat map coloring
 const getCellColor = (value: number, min: number, max: number, inverse: boolean = false) => {
-  let percentage = (value - min) / (max - min);
-  if (inverse) percentage = 1 - percentage; // Inverse for metrics where lower is better (Cost, Time, Carbon)
+  let percentage = max === min ? 0.5 : (value - min) / (max - min);
+  if (inverse && max !== min) percentage = 1 - percentage; // Inverse for metrics where lower is better (Cost, Time, Carbon)
   
   // Clamp
   percentage = Math.max(0, Math.min(1, percentage));
@@ -30,6 +30,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLive, setIsLive] = useState(false);
+  const [rtx5090Only, setRtx5090Only] = useState(false);
 
   // Dynamic Data Simulation
   useEffect(() => {
@@ -66,13 +67,17 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
     }
   };
 
+  const visibleModels = useMemo(() => {
+    return rtx5090Only ? models.filter(m => m.tags.includes('rtx5090-verified')) : models;
+  }, [models, rtx5090Only]);
+
   const sortedModels = useMemo(() => {
-    return [...models].sort((a, b) => {
+    return [...visibleModels].sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
       return sortDirection === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
-  }, [models, sortField, sortDirection]);
+  }, [visibleModels, sortField, sortDirection]);
 
   const toggleSelection = (id: string) => {
     const newSet = new Set(selectedIds);
@@ -91,7 +96,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
 
   // Helper to get ranges for coloring
   const getRange = (field: keyof ModelData) => {
-    const values = models.map(m => m[field] as number);
+    const values = visibleModels.map(m => m[field] as number);
+    if (values.length === 0) return { min: 0, max: 0 };
     return { min: Math.min(...values), max: Math.max(...values) };
   };
 
@@ -140,9 +146,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
             {isAnalyzing ? 'Thinking...' : 'Gemini Insights'}
           </button>
           
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium">
+          <button
+            onClick={() => setRtx5090Only(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium"
+          >
             <Filter className="w-4 h-4" />
-            Filter
+            {rtx5090Only ? 'RTX 5090 Only' : 'All Models'}
           </button>
         </div>
       </div>

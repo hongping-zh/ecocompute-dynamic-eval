@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
 import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check } from 'lucide-react';
@@ -115,13 +115,11 @@ const PRESET_TEMPLATES = [
 
 // 本地存储 key
 const STORAGE_KEY = 'ecocompute_calculator_state';
-const STORAGE_KEY_COMPARE = 'ecocompute_calculator_compare';
 
 // 扩展状态类型
 interface ExtendedState extends CalculatorState {
   tokensPerDay?: number;
   apiModel?: string;
-  customFormula?: string;
 }
 
 export const Calculator: React.FC = () => {
@@ -176,6 +174,51 @@ export const Calculator: React.FC = () => {
   const [showChart, setShowChart] = useState<'pie' | 'bar' | 'compare' | null>('compare');
   const [configCollapsed, setConfigCollapsed] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const templateDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭模板下拉菜单
+  useEffect(() => {
+    if (!showTemplates) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(e.target as Node)) {
+        setShowTemplates(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTemplates]);
+  const templateAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (templateAppliedRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('data')) return;
+
+    const templateId = params.get('template');
+    if (!templateId) return;
+
+    const template = PRESET_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+
+    const nextState: ExtendedState = {
+      ...template.config,
+      tokensPerDay: (template as any).tokensPerDay || 100000,
+      apiModel: (template as any).apiModel || 'deepseek-v3'
+    };
+    setState(nextState);
+
+    if ((template as any).compareModel) {
+      setCompareState({
+        ...template.config,
+        tokensPerDay: (template as any).tokensPerDay || 100000,
+        apiModel: (template as any).compareModel
+      });
+      setShowChart('compare');
+    }
+
+    templateAppliedRef.current = true;
+  }, []);
 
   // 自动保存到本地存储
   useEffect(() => {
@@ -298,40 +341,44 @@ export const Calculator: React.FC = () => {
     reader.readAsText(file);
   };
 
-  // 生成 AI 解释
-  const generateInsight = () => {
-    const savings = compareResults 
-      ? ((compareResults.monthlyCost - results.monthlyCost) / compareResults.monthlyCost * 100).toFixed(0)
-      : 0;
-    
+  // 生成 AI 解释（纯文本，不含 Markdown 语法）
+  const generateInsight = (): { main: string; detail: string } => {
     if (compareState && compareResults) {
+      const savings = ((compareResults.monthlyCost - results.monthlyCost) / compareResults.monthlyCost * 100).toFixed(0);
       const cheaper = results.monthlyCost < compareResults.monthlyCost ? state.apiModel : compareState.apiModel;
       const diff = Math.abs(results.monthlyCost - compareResults.monthlyCost).toFixed(2);
-      return `💡 **Insight**: Using ${API_PRICING[cheaper as keyof typeof API_PRICING]?.name || cheaper} saves you **$${diff}/month** (${Math.abs(Number(savings))}% less). At ${(state.tokensPerDay || 0).toLocaleString()} tokens/day, the annual savings would be **$${(Number(diff) * 12).toFixed(0)}**.`;
+      return {
+        main: `Using ${API_PRICING[cheaper as keyof typeof API_PRICING]?.name || cheaper} saves ${formatCurrency(Number(diff))}/month (${Math.abs(Number(savings))}% less).`,
+        detail: `At ${formatNumber(state.tokensPerDay || 0, 'tokens/day')}, the annual savings would be ${formatCurrency(Number(diff) * 12)}. Cost assumes a 50:50 input/output token ratio.`
+      };
     }
     
-    return `💡 Your current setup uses ${results.kwh.toFixed(1)} kWh/day, producing ${results.co2.toFixed(2)} kg CO₂. API costs: $${results.dailyCost.toFixed(2)}/day ($${results.monthlyCost.toFixed(0)}/month).`;
+    return {
+      main: `Your setup uses ${results.kwh.toFixed(1)} kWh/day, producing ${results.co2.toFixed(2)} kg CO₂.`,
+      detail: `API costs: ${formatCurrency(results.dailyCost)}/day (${formatCurrency(results.monthlyCost)}/month). Cost assumes a 50:50 input/output token ratio.`
+    };
   };
 
-  // 对比图表数据
+  // 对比图表数据（硬件相同时不显示 CO₂，因为碳排放只跟硬件有关）
+  const sameHardware = compareState?.hardware === state.hardware && compareState?.count === state.count && compareState?.hours === state.hours && compareState?.pue === state.pue;
   const comparisonBarData = compareState ? [
     { 
-      name: 'Monthly Cost',
+      name: 'Monthly ($)',
       A: results.monthlyCost,
       B: compareResults?.monthlyCost || 0,
       labelA: API_PRICING[state.apiModel as keyof typeof API_PRICING]?.name || 'Plan A',
       labelB: API_PRICING[compareState.apiModel as keyof typeof API_PRICING]?.name || 'Plan B'
     },
     {
-      name: 'Daily Cost',
+      name: 'Daily ($)',
       A: results.dailyCost,
       B: compareResults?.dailyCost || 0
     },
-    {
+    ...(!sameHardware ? [{
       name: 'CO₂ (kg)',
       A: results.co2,
       B: compareResults?.co2 || 0
-    }
+    }] : [])
   ] : [];
 
   // 饼图数据
@@ -354,7 +401,7 @@ export const Calculator: React.FC = () => {
         
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
-          <div className="relative">
+          <div className="relative" ref={templateDropdownRef}>
             <button 
               onClick={() => setShowTemplates(!showTemplates)}
               className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-medium transition-colors"
@@ -582,12 +629,17 @@ export const Calculator: React.FC = () => {
           </div>
 
           {/* AI Insight */}
+          {(() => { const insight = generateInsight(); return (
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <div className="flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-indigo-900 leading-relaxed">{generateInsight()}</p>
+              <div>
+                <p className="text-sm font-medium text-indigo-900">💡 {insight.main}</p>
+                <p className="text-xs text-indigo-700 mt-1">{insight.detail}</p>
+              </div>
             </div>
           </div>
+          ); })()}
         </div>
 
         {/* Chart Panel */}

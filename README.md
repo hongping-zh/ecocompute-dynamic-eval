@@ -71,12 +71,14 @@ ecocompute-dynamic-eval/
 ├── components/
 │   ├── Leaderboard.tsx      # Dynamic model comparison
 │   ├── AudioMonitor.tsx     # Real-time power monitoring
-│   ├── Calculator.tsx       # Carbon footprint calculator
+│   ├── Calculator.tsx       # Cost & carbon calculator with comparison mode
+│   ├── DeepSeekVsGpt.tsx    # DeepSeek vs GPT workflow guide
+│   ├── Methodology.tsx      # Data sources & formula disclosure
 │   └── SettingsPanel.tsx    # API configuration
 ├── services/
 │   └── geminiService.ts     # Multi-API integration
 ├── constants.ts             # RTX 5090 benchmark data
-├── App.tsx                  # Main application
+├── App.tsx                  # Main application with URL routing
 └── types.ts                 # TypeScript definitions
 ```
 
