@@ -1,8 +1,47 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Copy, Sparkles, GitCompare, X } from 'lucide-react';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+// 数值格式化工具
+const formatCurrency = (value: number): string => {
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
+  if (value >= 1) return `$${value.toFixed(2)}`;
+  return `$${value.toFixed(4)}`;
+};
+
+const formatNumber = (value: number, unit: string): string => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M ${unit}`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}K ${unit}`;
+  return `${value.toFixed(1)} ${unit}`;
+};
+
+// URL 分享功能
+const encodeStateToURL = (state: any, compareState: any): string => {
+  try {
+    const data = { s: state, c: compareState };
+    const encoded = btoa(JSON.stringify(data));
+    return `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+  } catch (e) {
+    console.error('Failed to encode state');
+    return window.location.href;
+  }
+};
+
+const decodeStateFromURL = (): { state: any; compareState: any } | null => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get('data');
+    if (data) {
+      const decoded = JSON.parse(atob(data));
+      return { state: decoded.s, compareState: decoded.c };
+    }
+  } catch (e) {
+    console.error('Failed to decode URL state');
+  }
+  return null;
+};
 
 // API 成本数据 ($/1M tokens) - 2026年2月最新价格
 const API_PRICING = {
@@ -118,18 +157,50 @@ export const Calculator: React.FC = () => {
     return getDefaultState();
   };
 
-  const [state, setState] = useState<ExtendedState>(loadSavedState);
-  // 默认启用对比模式，展示 DeepSeek V3 vs Lite
-  const [compareState, setCompareState] = useState<ExtendedState | null>(getDefaultCompareState);
+  // 从 URL 或本地存储加载状态
+  const loadInitialState = () => {
+    const urlState = decodeStateFromURL();
+    if (urlState?.state) return urlState.state;
+    return loadSavedState();
+  };
+
+  const loadInitialCompareState = () => {
+    const urlState = decodeStateFromURL();
+    if (urlState?.compareState) return urlState.compareState;
+    return getDefaultCompareState();
+  };
+
+  const [state, setState] = useState<ExtendedState>(loadInitialState);
+  const [compareState, setCompareState] = useState<ExtendedState | null>(loadInitialCompareState);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showChart, setShowChart] = useState<'pie' | 'bar' | 'compare' | null>('compare');
   const [configCollapsed, setConfigCollapsed] = useState(false);
-  const [showFormulaHelp, setShowFormulaHelp] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // 自动保存到本地存储
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
+
+  // 复制分享链接
+  const copyShareLink = async () => {
+    const url = encodeStateToURL(state, compareState);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (e) {
+      // Fallback for older browsers
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
 
   // 计算结果
   const calculateResults = (s: ExtendedState) => {
@@ -322,11 +393,20 @@ export const Calculator: React.FC = () => {
             </button>
           )}
           
-          <button onClick={exportConfig} className="p-2 bg-eco-50 text-eco-700 rounded-lg hover:bg-eco-100" title="Export">
+          <button 
+            onClick={copyShareLink}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${linkCopied ? 'bg-eco-500 text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}
+            title="Copy share link"
+          >
+            {linkCopied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+            <span className="hidden sm:inline">{linkCopied ? 'Copied!' : 'Share'}</span>
+          </button>
+
+          <button onClick={exportConfig} className="p-2 bg-eco-50 text-eco-700 rounded-lg hover:bg-eco-100" title="Export JSON">
             <Download className="w-4 h-4" />
           </button>
           
-          <label className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 cursor-pointer" title="Import">
+          <label className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 cursor-pointer" title="Import JSON">
             <Upload className="w-4 h-4" />
             <input type="file" accept=".json" onChange={importConfig} className="hidden" />
           </label>
@@ -440,35 +520,46 @@ export const Calculator: React.FC = () => {
 
         {/* Results Panel */}
         <div className="lg:col-span-4 space-y-4">
-          {/* Cost Cards */}
+          {/* Cost Cards with formatted values */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-eco-50 to-emerald-50 p-4 rounded-xl border border-eco-100">
               <div className="text-xs text-eco-600 font-medium">Daily Cost</div>
-              <div className="text-2xl font-bold text-slate-800">${results.dailyCost.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-slate-800">{formatCurrency(results.dailyCost)}</div>
               <div className="text-xs text-slate-500">{results.pricing.name}</div>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-100">
               <div className="text-xs text-purple-600 font-medium">Monthly Cost</div>
-              <div className="text-2xl font-bold text-slate-800">${results.monthlyCost.toFixed(0)}</div>
-              <div className="text-xs text-slate-500">{(state.tokensPerDay || 0).toLocaleString()} tok/day</div>
+              <div className="text-2xl font-bold text-slate-800">{formatCurrency(results.monthlyCost)}</div>
+              <div className="text-xs text-slate-500">{formatNumber(state.tokensPerDay || 0, 'tokens/day')}</div>
             </div>
           </div>
 
-          {/* Compare Results */}
+          {/* Compare Results with savings indicator */}
           {compareState && compareResults && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white p-4 rounded-xl border border-slate-200">
-                <div className="text-xs text-slate-500">Plan B Daily</div>
-                <div className="text-xl font-bold text-slate-700">${compareResults.dailyCost.toFixed(2)}</div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <div className="text-xs text-slate-500">Plan B Daily</div>
+                  <div className="text-xl font-bold text-slate-700">{formatCurrency(compareResults.dailyCost)}</div>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <div className="text-xs text-slate-500">Plan B Monthly</div>
+                  <div className="text-xl font-bold text-slate-700">{formatCurrency(compareResults.monthlyCost)}</div>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200">
-                <div className="text-xs text-slate-500">Plan B Monthly</div>
-                <div className="text-xl font-bold text-slate-700">${compareResults.monthlyCost.toFixed(0)}</div>
-              </div>
+              {/* Savings Badge */}
+              {results.monthlyCost !== compareResults.monthlyCost && (
+                <div className={`p-3 rounded-xl text-center text-sm font-medium ${results.monthlyCost < compareResults.monthlyCost ? 'bg-eco-100 text-eco-800' : 'bg-red-100 text-red-800'}`}>
+                  {results.monthlyCost < compareResults.monthlyCost 
+                    ? `🎉 Plan A saves ${formatCurrency(compareResults.monthlyCost - results.monthlyCost)}/month (${((1 - results.monthlyCost / compareResults.monthlyCost) * 100).toFixed(0)}% less)`
+                    : `⚠️ Plan B saves ${formatCurrency(results.monthlyCost - compareResults.monthlyCost)}/month`
+                  }
+                </div>
+              )}
             </div>
           )}
 
-          {/* Carbon Stats */}
+          {/* Carbon Stats with units */}
           <div className="bg-white p-4 rounded-xl border border-slate-200">
             <div className="flex items-center gap-2 mb-3">
               <Cloud className="w-5 h-5 text-eco-500" />
@@ -476,16 +567,16 @@ export const Calculator: React.FC = () => {
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <div className="text-lg font-bold text-slate-800">{results.co2.toFixed(1)}</div>
-                <div className="text-xs text-slate-500">kg CO₂/day</div>
+                <div className="text-lg font-bold text-slate-800">{results.co2.toFixed(1)}<span className="text-xs font-normal text-slate-500 ml-1">kg</span></div>
+                <div className="text-xs text-slate-500">CO₂/day</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-slate-800">{results.kwh.toFixed(1)}</div>
-                <div className="text-xs text-slate-500">kWh/day</div>
+                <div className="text-lg font-bold text-slate-800">{results.kwh.toFixed(1)}<span className="text-xs font-normal text-slate-500 ml-1">kWh</span></div>
+                <div className="text-xs text-slate-500">Energy/day</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-slate-800">{Math.ceil(results.co2 * 4)}</div>
-                <div className="text-xs text-slate-500">km driving</div>
+                <div className="text-lg font-bold text-slate-800">{Math.ceil(results.co2 * 4)}<span className="text-xs font-normal text-slate-500 ml-1">km</span></div>
+                <div className="text-xs text-slate-500">Car equiv.</div>
               </div>
             </div>
           </div>
