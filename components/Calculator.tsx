@@ -1,8 +1,138 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
+
+// ============================================================
+// Slider + Number Input 双向绑定组件
+// ============================================================
+interface SliderInputProps {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  presets?: { label: string; value: number }[];
+  formatDisplay?: (v: number) => string;
+}
+
+const SliderInput: React.FC<SliderInputProps> = ({ label, value, onChange, min, max, step, unit, presets, formatDisplay }) => {
+  const [inputValue, setInputValue] = useState(String(value));
+
+  useEffect(() => { setInputValue(String(value)); }, [value]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    const parsed = parseFloat(inputValue);
+    if (!isNaN(parsed) && parsed >= min && parsed <= max) {
+      onChange(parsed);
+    } else if (!isNaN(parsed)) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped);
+      setInputValue(String(clamped));
+    } else {
+      setInputValue(String(value));
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleInputBlur();
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-semibold text-slate-700">{label}</label>
+        <span className="text-xs text-slate-500">{formatDisplay ? formatDisplay(value) : `${value} ${unit}`}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-eco-500"
+        />
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            onKeyDown={handleKeyDown}
+            className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded text-sm text-right font-mono"
+          />
+          <span className="text-xs text-slate-400 w-8">{unit}</span>
+        </div>
+      </div>
+      {presets && (
+        <div className="flex gap-1 flex-wrap">
+          {presets.map(p => (
+            <button
+              key={p.value}
+              onClick={() => onChange(p.value)}
+              className={`px-2 py-0.5 text-xs rounded transition-colors ${value === p.value ? 'bg-eco-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================
+// 公式引擎：IF / MIN / MAX / 阶梯计费
+// ============================================================
+interface FormulaError {
+  message: string;
+  field?: string;
+}
+
+const validateInputs = (s: { tokensPerDay?: number; count: number; hours: number; pue: number }): FormulaError | null => {
+  if ((s.tokensPerDay || 0) < 0) return { message: 'Tokens/Day cannot be negative', field: 'tokensPerDay' };
+  if (s.count < 1 || s.count > 1000) return { message: 'GPU count must be 1-1000', field: 'count' };
+  if (s.hours < 0.1 || s.hours > 24) return { message: 'Hours must be 0.1-24', field: 'hours' };
+  if (s.pue < 1 || s.pue > 3) return { message: 'PUE must be 1.0-3.0', field: 'pue' };
+  return null;
+};
+
+// 阶梯计费函数：超过阈值后应用折扣
+const tieredCost = (tokens: number, baseInputPrice: number, baseOutputPrice: number): number => {
+  // 阶梯定价：>5M tokens/day 享受 10% 折扣，>20M 享受 20% 折扣
+  const avgPrice = (baseInputPrice + baseOutputPrice) / 2;
+  const dailyMTokens = tokens / 1_000_000;
+
+  if (dailyMTokens <= 5) {
+    return dailyMTokens * avgPrice;
+  } else if (dailyMTokens <= 20) {
+    const base = 5 * avgPrice;
+    const discounted = (dailyMTokens - 5) * avgPrice * 0.9;
+    return base + discounted;
+  } else {
+    const tier1 = 5 * avgPrice;
+    const tier2 = 15 * avgPrice * 0.9;
+    const tier3 = (dailyMTokens - 20) * avgPrice * 0.8;
+    return tier1 + tier2 + tier3;
+  }
+};
+
+// 碳排放惩罚系数：超过阈值后碳税增加
+const carbonPenalty = (co2Kg: number): number => {
+  // >100 kg/day: 1.2x penalty; >500 kg/day: 1.5x penalty
+  if (co2Kg > 500) return co2Kg * 1.5;
+  if (co2Kg > 100) return co2Kg * 1.2;
+  return co2Kg;
+};
 
 // 数值格式化工具
 const formatCurrency = (value: number): string => {
@@ -245,24 +375,78 @@ export const Calculator: React.FC = () => {
     }
   };
 
-  // 计算结果
+  // 输入验证
+  const validationError = useMemo(() => validateInputs(state), [state]);
+
+  // 计算结果（使用阶梯计费 + 碳排放惩罚系数）
   const calculateResults = (s: ExtendedState) => {
     const hw = HARDWARE_OPTIONS.find(h => h.value === s.hardware);
     const power = hw ? hw.power : 200;
     const kwh = (power * s.count * s.hours * s.pue) / 1000;
-    const co2 = kwh * 0.475;
+    const rawCo2 = kwh * 0.475;
+    const co2 = carbonPenalty(rawCo2);
+    const co2HasPenalty = co2 > rawCo2;
     
-    // API 成本计算
+    // API 成本计算（阶梯计费）
     const tokens = s.tokensPerDay || 100000;
     const pricing = API_PRICING[s.apiModel as keyof typeof API_PRICING] || API_PRICING['deepseek-v3'];
-    const dailyCost = (tokens / 1000000) * ((pricing.input + pricing.output) / 2);
+    const dailyCost = tieredCost(tokens, pricing.input, pricing.output);
     const monthlyCost = dailyCost * 30;
     
-    return { power, kwh, co2, dailyCost, monthlyCost, tokens, pricing };
+    // 判断是否触发了阶梯折扣
+    const linearCost = (tokens / 1_000_000) * ((pricing.input + pricing.output) / 2);
+    const hasDiscount = dailyCost < linearCost * 0.99;
+    const discountPct = hasDiscount ? ((1 - dailyCost / linearCost) * 100).toFixed(0) : null;
+    
+    return { power, kwh, co2, rawCo2, co2HasPenalty, dailyCost, monthlyCost, tokens, pricing, hasDiscount, discountPct };
   };
 
   const results = useMemo(() => calculateResults(state), [state]);
   const compareResults = useMemo(() => compareState ? calculateResults(compareState) : null, [compareState]);
+
+  // 敏感性分析数据：Token 增长趋势 + 盈亏平衡点
+  const sensitivityData = useMemo(() => {
+    if (!compareState) return [];
+    const pricingA = API_PRICING[state.apiModel as keyof typeof API_PRICING] || API_PRICING['deepseek-v3'];
+    const pricingB = API_PRICING[compareState.apiModel as keyof typeof API_PRICING] || API_PRICING['gpt-4o'];
+    const nameA = pricingA.name;
+    const nameB = pricingB.name;
+
+    const points: { tokens: string; tokensRaw: number; A: number; B: number; [key: string]: any }[] = [];
+    const tokenSteps = [10000, 50000, 100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000];
+    
+    for (const t of tokenSteps) {
+      const costA = tieredCost(t, pricingA.input, pricingA.output) * 30;
+      const costB = tieredCost(t, pricingB.input, pricingB.output) * 30;
+      points.push({
+        tokens: t >= 1000000 ? `${t / 1000000}M` : `${t / 1000}K`,
+        tokensRaw: t,
+        A: parseFloat(costA.toFixed(2)),
+        B: parseFloat(costB.toFixed(2)),
+      });
+    }
+    return points;
+  }, [state.apiModel, compareState?.apiModel]);
+
+  // 盈亏平衡点计算
+  const breakEvenPoint = useMemo(() => {
+    if (!compareState || sensitivityData.length < 2) return null;
+    // 对于不同定价的两个模型，找到成本交叉点
+    for (let i = 1; i < sensitivityData.length; i++) {
+      const prev = sensitivityData[i - 1];
+      const curr = sensitivityData[i];
+      const prevDiff = prev.A - prev.B;
+      const currDiff = curr.A - curr.B;
+      if (prevDiff * currDiff < 0) {
+        // 线性插值
+        const ratio = Math.abs(prevDiff) / (Math.abs(prevDiff) + Math.abs(currDiff));
+        const breakTokens = prev.tokensRaw + ratio * (curr.tokensRaw - prev.tokensRaw);
+        const breakCost = prev.A + ratio * (curr.A - prev.A);
+        return { tokens: breakTokens, cost: breakCost };
+      }
+    }
+    return null;
+  }, [sensitivityData, compareState]);
 
   const handleChange = (field: keyof ExtendedState, value: string | number) => {
     setState(prev => ({ ...prev, [field]: value }));
@@ -566,27 +750,24 @@ export const Calculator: React.FC = () => {
               </div>
             )}
 
-            {/* Tokens per day */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Tokens/Day</label>
-              <input 
-                type="number" 
-                value={state.tokensPerDay || 100000}
-                onChange={(e) => handleChange('tokensPerDay', parseInt(e.target.value) || 100000)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-              />
-              <div className="flex gap-1 flex-wrap">
-                {[100000, 500000, 1000000, 5000000].map(t => (
-                  <button 
-                    key={t} 
-                    onClick={() => handleChange('tokensPerDay', t)}
-                    className={`px-2 py-1 text-xs rounded ${state.tokensPerDay === t ? 'bg-eco-500 text-white' : 'bg-slate-100 text-slate-600'}`}
-                  >
-                    {t >= 1000000 ? `${t/1000000}M` : `${t/1000}K`}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Tokens per day — Slider + Number Input 双向绑定 */}
+            <SliderInput
+              label="Tokens/Day"
+              value={state.tokensPerDay || 100000}
+              onChange={(v) => handleChange('tokensPerDay', v)}
+              min={1000}
+              max={50000000}
+              step={1000}
+              unit="tok"
+              formatDisplay={(v) => v >= 1000000 ? `${(v/1000000).toFixed(1)}M tokens` : `${(v/1000).toFixed(0)}K tokens`}
+              presets={[
+                { label: '100K', value: 100000 },
+                { label: '500K', value: 500000 },
+                { label: '1M', value: 1000000 },
+                { label: '5M', value: 5000000 },
+                { label: '10M', value: 10000000 },
+              ]}
+            />
 
             {/* Hardware */}
             <div className="space-y-2">
@@ -602,20 +783,66 @@ export const Calculator: React.FC = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-500">GPUs</label>
-                <input type="number" min="1" value={state.count} onChange={(e) => handleChange('count', parseInt(e.target.value) || 1)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm" />
+            {/* GPUs — Slider + Input */}
+            <SliderInput
+              label="GPU Count"
+              value={state.count}
+              onChange={(v) => handleChange('count', Math.round(v))}
+              min={1}
+              max={64}
+              step={1}
+              unit="GPUs"
+            />
+
+            {/* Hours — Slider + Input */}
+            <SliderInput
+              label="Hours/Day"
+              value={state.hours}
+              onChange={(v) => handleChange('hours', v)}
+              min={0.5}
+              max={24}
+              step={0.5}
+              unit="hrs"
+              presets={[
+                { label: '4h', value: 4 },
+                { label: '8h', value: 8 },
+                { label: '16h', value: 16 },
+                { label: '24h', value: 24 },
+              ]}
+            />
+
+            {/* PUE — Slider + Input */}
+            <SliderInput
+              label="PUE (Power Usage Effectiveness)"
+              value={state.pue}
+              onChange={(v) => handleChange('pue', parseFloat(v.toFixed(1)))}
+              min={1.0}
+              max={2.5}
+              step={0.1}
+              unit=""
+              formatDisplay={(v) => `PUE ${v.toFixed(1)}`}
+              presets={[
+                { label: 'Best (1.1)', value: 1.1 },
+                { label: 'Avg (1.3)', value: 1.3 },
+                { label: 'Poor (1.8)', value: 1.8 },
+              ]}
+            />
+
+            {/* Validation Error */}
+            {validationError && (
+              <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <span className="text-xs text-red-700">{validationError.message}</span>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-500">Hours</label>
-                <input type="number" min="1" value={state.hours} onChange={(e) => handleChange('hours', parseFloat(e.target.value) || 1)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm" />
+            )}
+
+            {/* Tiered Pricing Info */}
+            {results.hasDiscount && (
+              <div className="flex items-center gap-2 p-2.5 bg-eco-50 border border-eco-200 rounded-lg">
+                <Sparkles className="w-4 h-4 text-eco-600 flex-shrink-0" />
+                <span className="text-xs text-eco-800">Volume discount applied: ~{results.discountPct}% off (tiered pricing for &gt;5M tokens/day)</span>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-500">PUE</label>
-                <input type="number" min="1" max="2" step="0.1" value={state.pue} onChange={(e) => handleChange('pue', parseFloat(e.target.value) || 1.2)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm" />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -708,6 +935,12 @@ export const Calculator: React.FC = () => {
                 Compare
               </button>
               <button 
+                onClick={() => setShowChart('bar')}
+                className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${showChart === 'bar' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+              >
+                <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />Trend</span>
+              </button>
+              <button 
                 onClick={() => setShowChart('pie')}
                 className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${showChart === 'pie' ? 'bg-eco-500 text-white' : 'bg-slate-100 text-slate-600'}`}
               >
@@ -716,13 +949,14 @@ export const Calculator: React.FC = () => {
             </div>
           </div>
           
-          <div className="h-56 md:h-64">
+          <div className="h-56 md:h-72">
+            {/* Bar Compare Chart */}
             {showChart === 'compare' && compareState && (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonBarData} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 10 }} />
-                  <Tooltip />
+                  <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v.toFixed(v < 1 ? 2 : 0)}`} label={{ value: 'USD', position: 'insideBottomRight', offset: -5, fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis dataKey="name" type="category" width={75} tick={{ fontSize: 10 }} />
+                  <Tooltip formatter={(value: number) => [`$${value.toFixed(4)}`, '']} />
                   <Legend />
                   <Bar dataKey="A" name={API_PRICING[state.apiModel as keyof typeof API_PRICING]?.name || 'Plan A'} fill="#10b981" radius={[0, 4, 4, 0]} />
                   <Bar dataKey="B" name={API_PRICING[compareState.apiModel as keyof typeof API_PRICING]?.name || 'Plan B'} fill="#8b5cf6" radius={[0, 4, 4, 0]} />
@@ -737,7 +971,48 @@ export const Calculator: React.FC = () => {
                 <p className="text-xs mt-1">to enable comparison mode</p>
               </div>
             )}
+
+            {/* Sensitivity Analysis — Trend Line + Breakeven */}
+            {showChart === 'bar' && compareState && sensitivityData.length > 0 && (
+              <div className="h-full flex flex-col">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={sensitivityData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="tokens" tick={{ fontSize: 9 }} label={{ value: 'Tokens/Day', position: 'insideBottomRight', offset: -5, fontSize: 9, fill: '#94a3b8' }} />
+                    <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v.toFixed(0)}`} label={{ value: 'Monthly Cost (USD)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 9, fill: '#94a3b8' }} />
+                    <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}/mo`, '']} labelFormatter={(label) => `${label} tokens/day`} />
+                    <Legend />
+                    <Line type="monotone" dataKey="A" name={API_PRICING[state.apiModel as keyof typeof API_PRICING]?.name || 'Plan A'} stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="B" name={API_PRICING[compareState.apiModel as keyof typeof API_PRICING]?.name || 'Plan B'} stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 3 }} />
+                    {breakEvenPoint && (
+                      <ReferenceLine x={breakEvenPoint.tokens >= 1000000 ? `${breakEvenPoint.tokens / 1000000}M` : `${breakEvenPoint.tokens / 1000}K`} stroke="#ef4444" strokeDasharray="5 5" label={{ value: 'Break-even', position: 'top', fontSize: 10, fill: '#ef4444' }} />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+                {breakEvenPoint && (
+                  <div className="text-center mt-1 px-2 py-1 bg-red-50 rounded-lg">
+                    <span className="text-[10px] text-red-700 font-medium">
+                      Break-even at {breakEvenPoint.tokens >= 1000000 ? `${(breakEvenPoint.tokens/1000000).toFixed(1)}M` : `${(breakEvenPoint.tokens/1000).toFixed(0)}K`} tokens/day (${formatCurrency(breakEvenPoint.cost)}/mo)
+                    </span>
+                  </div>
+                )}
+                {!breakEvenPoint && (
+                  <div className="text-center mt-1 px-2 py-1 bg-slate-50 rounded-lg">
+                    <span className="text-[10px] text-slate-500">No break-even point — one plan is always cheaper across all volumes</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {showChart === 'bar' && !compareState && (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm">
+                <TrendingUp className="w-10 h-10 mb-2 opacity-50" />
+                <p>Enable Compare mode to see</p>
+                <p className="text-xs mt-1">sensitivity analysis & break-even</p>
+              </div>
+            )}
             
+            {/* Pie Chart with units */}
             {showChart === 'pie' && (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -746,7 +1021,7 @@ export const Calculator: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${value.toFixed(0)} W`} />
+                  <Tooltip formatter={(value: number) => [`${value.toFixed(0)} W`, 'Power']} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -760,6 +1035,20 @@ export const Calculator: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Carbon Penalty Notice */}
+      {results.co2HasPenalty && (
+        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <div>
+            <span className="text-sm font-medium text-amber-800">Carbon penalty applied</span>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Raw CO₂: {results.rawCo2.toFixed(1)} kg/day → Adjusted: {results.co2.toFixed(1)} kg/day. 
+              Emissions exceeding {results.rawCo2 > 500 ? '500' : '100'} kg/day incur a {results.rawCo2 > 500 ? '1.5×' : '1.2×'} carbon tax multiplier.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
