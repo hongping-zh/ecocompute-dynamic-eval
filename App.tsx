@@ -180,7 +180,7 @@ const App: React.FC = () => {
 
         {/* Dynamic View Content */}
         <div className="flex-1 overflow-auto animate-fade-in-up">
-            {view === AppView.LEADERBOARD && <Leaderboard apiConfig={apiConfig} />}
+            {view === AppView.LEADERBOARD && <Leaderboard apiConfig={apiConfig} onOpenTemplate={(id) => openCalculatorTemplate(id)} />}
             {view === AppView.MONITOR && <AudioMonitor />}
             {view === AppView.CALCULATOR && <Calculator />}
             {view === AppView.DEEPSEEK_VS_GPT && <DeepSeekVsGpt onOpenCalculator={() => openCalculatorTemplate('deepseek-vs-gpt')} />}

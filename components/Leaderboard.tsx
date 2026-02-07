@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { INITIAL_MODELS } from '../constants';
 import { ModelData, SortField, SortDirection } from '../types';
-import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Filter, Activity, Play, Pause } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Filter, Activity, Play, Pause, ArrowRight, Layers } from 'lucide-react';
 import { analyzeLeaderboard } from '../services/geminiService';
 import { ApiConfig } from './SettingsPanel';
 
@@ -18,11 +18,52 @@ const getCellColor = (value: number, min: number, max: number, inverse: boolean 
   return 'bg-red-50 text-red-700';
 };
 
+// Template Gallery data
+const GALLERY_TEMPLATES = [
+  {
+    id: 'infra-deepseek-openai',
+    icon: '🏗️',
+    category: 'AI Infrastructure',
+    title: 'DeepSeek vs OpenAI 深度成本评估',
+    desc: '企业级 AI 基础设施选型：8×H100 集群，日均 500 万 tokens，全维度成本与碳排放对比',
+    tags: ['DeepSeek-V3', 'GPT-4o', 'H100', '5M tok/day'],
+    color: 'from-indigo-500 to-blue-600',
+    bgColor: 'bg-indigo-50',
+    borderColor: 'border-indigo-200',
+    tagColor: 'bg-indigo-100 text-indigo-700',
+  },
+  {
+    id: 'carbon-quota-trading',
+    icon: '🌍',
+    category: 'Energy & Environment',
+    title: '企业碳排放配额交易预测',
+    desc: '大规模 GPU 集群碳排放评估：16×A100 全天运行，碳税惩罚系数建模与配额成本分析',
+    tags: ['16×A100', 'Carbon Tax', 'PUE 1.4', '10M tok/day'],
+    color: 'from-emerald-500 to-teal-600',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+    tagColor: 'bg-emerald-100 text-emerald-700',
+  },
+  {
+    id: 'freelancer-net-income',
+    icon: '💼',
+    category: 'Software Engineering',
+    title: '自由职业者个人税后净收益建模',
+    desc: '自由开发者 AI 工具成本分析：Gemini Flash vs GPT-4o-mini，月度净成本与 ROI 评估',
+    tags: ['Gemini 2.0', 'GPT-4o-mini', 'T4', '100K tok/day'],
+    color: 'from-amber-500 to-orange-600',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    tagColor: 'bg-amber-100 text-amber-700',
+  },
+];
+
 interface LeaderboardProps {
   apiConfig: ApiConfig;
+  onOpenTemplate?: (templateId: string) => void;
 }
 
-export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
+export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTemplate }) => {
   const [models, setModels] = useState<ModelData[]>(INITIAL_MODELS);
   const [sortField, setSortField] = useState<SortField>('accuracy');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -165,6 +206,50 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig }) => {
             </div>
         </div>
       )}
+
+      {/* Template Gallery */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+              <Layers className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Template Gallery</h3>
+              <p className="text-[10px] text-slate-500">Industry-specific cost & carbon analysis templates</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-3">
+          {GALLERY_TEMPLATES.map(tpl => (
+            <button
+              key={tpl.id}
+              onClick={() => onOpenTemplate?.(tpl.id)}
+              className={`group text-left p-4 rounded-xl border ${tpl.borderColor} ${tpl.bgColor} hover:shadow-md transition-all duration-200 hover:-translate-y-0.5`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-2xl">{tpl.icon}</span>
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${tpl.tagColor}`}>
+                  {tpl.category}
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-800 mb-1 leading-tight">{tpl.title}</h4>
+              <p className="text-[11px] text-slate-600 leading-relaxed mb-2.5">{tpl.desc}</p>
+              <div className="flex flex-wrap gap-1 mb-2.5">
+                {tpl.tags.map(tag => (
+                  <span key={tag} className="px-1.5 py-0.5 bg-white/70 border border-slate-200 rounded text-[9px] font-medium text-slate-600">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium text-slate-500 group-hover:text-slate-800 transition-colors">
+                Open in Calculator
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Main Table */}
       <div className="flex-1 overflow-hidden bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">

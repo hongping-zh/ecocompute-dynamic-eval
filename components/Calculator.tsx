@@ -335,6 +335,47 @@ const PRESET_TEMPLATES = [
     config: { hardware: 't4', count: 1, hours: 8, pue: 1.2, region: 'global' },
     apiModel: 'gemini-1.5-flash',
     tokensPerDay: 50000
+  },
+  // ========== Template Gallery 三大行业模板 ==========
+  {
+    id: 'infra-deepseek-openai',
+    name: '🏗️ AI 基础设施：DeepSeek vs OpenAI 深度成本评估',
+    description: '企业级 AI 基础设施选型：日均 500 万 tokens，8×H100 集群，DeepSeek-V3 vs GPT-4o 全维度对比',
+    config: { hardware: 'h100', count: 8, hours: 24, pue: 1.15, region: 'global' },
+    apiModel: 'deepseek-v3',
+    compareModel: 'gpt-4o',
+    tokensPerDay: 5000000,
+    featured: true,
+    gallery: true,
+    galleryCategory: 'AI Infrastructure',
+    galleryIcon: '🏗️',
+    galleryColor: 'indigo'
+  },
+  {
+    id: 'carbon-quota-trading',
+    name: '🌍 能源与环保：企业碳排放配额交易预测',
+    description: '大规模 GPU 集群碳排放评估：16×A100 全天运行，对比高效 vs 标准 PUE 的碳成本差异',
+    config: { hardware: 'a100', count: 16, hours: 24, pue: 1.4, region: 'global' },
+    apiModel: 'deepseek-v3',
+    compareModel: 'claude-3.5-sonnet',
+    tokensPerDay: 10000000,
+    gallery: true,
+    galleryCategory: 'Energy & Environment',
+    galleryIcon: '🌍',
+    galleryColor: 'emerald'
+  },
+  {
+    id: 'freelancer-net-income',
+    name: '💼 软件工程：自由职业者个人税后净收益建模',
+    description: '自由开发者 AI 工具成本分析：日均 10 万 tokens，对比 Gemini Flash vs GPT-4o-mini 的月度净成本',
+    config: { hardware: 't4', count: 1, hours: 10, pue: 1.2, region: 'global' },
+    apiModel: 'gemini-2.0-flash',
+    compareModel: 'gpt-4o-mini',
+    tokensPerDay: 100000,
+    gallery: true,
+    galleryCategory: 'Software Engineering',
+    galleryIcon: '💼',
+    galleryColor: 'amber'
   }
 ];
 
