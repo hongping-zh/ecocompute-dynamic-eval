@@ -6,8 +6,9 @@ import { AudioMonitor } from './components/AudioMonitor';
 import { SettingsPanel, ApiConfig, loadApiConfig } from './components/SettingsPanel';
 import { Methodology } from './components/Methodology';
 import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
+import { Pricing } from './components/Pricing';
 import { AITools } from './components/AITools';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail } from 'lucide-react';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, CreditCard } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -117,6 +118,14 @@ const App: React.FC = () => {
             <BookOpen className="w-5 h-5 flex-shrink-0" />
             <span className="hidden lg:block font-medium">Methodology</span>
           </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.PRICING)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.PRICING ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <CreditCard className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Pricing</span>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-3">
@@ -153,6 +162,7 @@ const App: React.FC = () => {
                     {view === AppView.CALCULATOR && 'Emissions Calculator'}
                     {view === AppView.DEEPSEEK_VS_GPT && 'DeepSeek vs GPT'}
                     {view === AppView.METHODOLOGY && 'Methodology & Data Sources'}
+                    {view === AppView.PRICING && 'Pricing & Plans'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
@@ -160,6 +170,7 @@ const App: React.FC = () => {
                     {view === AppView.CALCULATOR && 'Estimate carbon footprint for training runs.'}
                     {view === AppView.DEEPSEEK_VS_GPT && 'A practical workflow to compare cost and carbon impact for your workload.'}
                     {view === AppView.METHODOLOGY && 'How the metrics are measured and how estimates are derived.'}
+                    {view === AppView.PRICING && 'Choose the right plan for your team and use case.'}
                 </p>
             </div>
             
@@ -185,6 +196,7 @@ const App: React.FC = () => {
             {view === AppView.CALCULATOR && <Calculator />}
             {view === AppView.DEEPSEEK_VS_GPT && <DeepSeekVsGpt onOpenCalculator={() => openCalculatorTemplate('deepseek-vs-gpt')} />}
             {view === AppView.METHODOLOGY && <Methodology />}
+            {view === AppView.PRICING && <Pricing />}
         </div>
       </main>
 

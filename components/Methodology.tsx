@@ -230,6 +230,82 @@ export const Methodology: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Competitive Differentiation */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 className="text-lg font-bold text-slate-800 mb-1">How EcoCompute Compares</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Several tools address AI carbon tracking. Here is how EcoCompute fits into the landscape.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-slate-50 text-slate-500 font-semibold">
+              <tr>
+                <th className="p-3">Capability</th>
+                <th className="p-3 text-indigo-700 bg-indigo-50">EcoCompute</th>
+                <th className="p-3">CodeCarbon</th>
+                <th className="p-3">ML CO2 Impact</th>
+                <th className="p-3">W&B Carbon</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-600">
+              <tr>
+                <td className="p-3 font-medium">Cost + Carbon unified</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ Full TCO</td>
+                <td className="p-3">✗ Carbon only</td>
+                <td className="p-3">✗ Carbon only</td>
+                <td className="p-3">~ Partial</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">API model comparison</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ 8+ models</td>
+                <td className="p-3">✗ Local only</td>
+                <td className="p-3">✗ Training only</td>
+                <td className="p-3">✗ Local only</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">Interactive calculator</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ With templates</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✓ Basic</td>
+                <td className="p-3">✗</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">Sensitivity analysis</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ Breakeven</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✗</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">Data provenance</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ Per-row badges</td>
+                <td className="p-3">✓ Measured</td>
+                <td className="p-3">~ Estimated</td>
+                <td className="p-3">✓ Measured</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">Configurable scoring</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ Weighted</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✗</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">Decision export (JSON)</td>
+                <td className="p-3 text-indigo-700 bg-indigo-50/50 font-semibold">✓ Trace format</td>
+                <td className="p-3">✓ CSV</td>
+                <td className="p-3">✗</td>
+                <td className="p-3">✓ W&B format</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-slate-400 mt-3">
+          EcoCompute's differentiator is the unified cost-carbon-performance decision framework. 
+          Our moat will grow through continuously updated benchmark datasets and user behavior data as we scale to the backend-powered Pro and Enterprise tiers.
+        </p>
+      </div>
     </div>
   );
 };

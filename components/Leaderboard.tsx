@@ -1,9 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { INITIAL_MODELS } from '../constants';
-import { ModelData, SortField, SortDirection } from '../types';
-import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Filter, Activity, Play, Pause, ArrowRight, Layers } from 'lucide-react';
+import { ModelData, SortField, SortDirection, DataConfidence } from '../types';
+import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Filter, Activity, Play, Pause, ArrowRight, Layers, SlidersHorizontal } from 'lucide-react';
 import { analyzeLeaderboard } from '../services/geminiService';
 import { ApiConfig } from './SettingsPanel';
+
+// Confidence badge styling
+const CONFIDENCE_CONFIG: Record<DataConfidence, { label: string; color: string; icon: string }> = {
+  measured: { label: 'Measured', color: 'bg-green-100 text-green-800 border-green-200', icon: '✓' },
+  estimated: { label: 'Estimated', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: '~' },
+  research: { label: 'Research', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '◇' },
+};
 
 // Helper for heat map coloring
 const getCellColor = (value: number, min: number, max: number, inverse: boolean = false) => {
@@ -72,6 +79,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [rtx5090Only, setRtx5090Only] = useState(false);
+  const [showWeights, setShowWeights] = useState(false);
+  const [weights, setWeights] = useState({
+    accuracy: 25,
+    executionTime: 20,
+    cost: 25,
+    carbonImpact: 15,
+    energyEfficiency: 15,
+  });
 
   // Dynamic Data Simulation
   useEffect(() => {
@@ -111,6 +126,34 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   const visibleModels = useMemo(() => {
     return rtx5090Only ? models.filter(m => m.tags.includes('rtx5090-verified')) : models;
   }, [models, rtx5090Only]);
+
+  // Composite score: normalize each metric 0-1 then weighted sum
+  const compositeScores = useMemo(() => {
+    const ranges = {
+      accuracy: { min: Math.min(...visibleModels.map(m => m.accuracy)), max: Math.max(...visibleModels.map(m => m.accuracy)) },
+      executionTime: { min: Math.min(...visibleModels.map(m => m.executionTime)), max: Math.max(...visibleModels.map(m => m.executionTime)) },
+      cost: { min: Math.min(...visibleModels.map(m => m.cost)), max: Math.max(...visibleModels.map(m => m.cost)) },
+      carbonImpact: { min: Math.min(...visibleModels.map(m => m.carbonImpact)), max: Math.max(...visibleModels.map(m => m.carbonImpact)) },
+      energyEfficiency: { min: Math.min(...visibleModels.map(m => m.energyEfficiency)), max: Math.max(...visibleModels.map(m => m.energyEfficiency)) },
+    };
+    const totalWeight = weights.accuracy + weights.executionTime + weights.cost + weights.carbonImpact + weights.energyEfficiency || 1;
+    const normalize = (val: number, min: number, max: number, inverse = false) => {
+      if (max === min) return 0.5;
+      const n = (val - min) / (max - min);
+      return inverse ? 1 - n : n;
+    };
+    const scores: Record<string, number> = {};
+    visibleModels.forEach(m => {
+      scores[m.id] = (
+        normalize(m.accuracy, ranges.accuracy.min, ranges.accuracy.max) * weights.accuracy +
+        normalize(m.executionTime, ranges.executionTime.min, ranges.executionTime.max, true) * weights.executionTime +
+        normalize(m.cost, ranges.cost.min, ranges.cost.max, true) * weights.cost +
+        normalize(m.carbonImpact, ranges.carbonImpact.min, ranges.carbonImpact.max, true) * weights.carbonImpact +
+        normalize(m.energyEfficiency, ranges.energyEfficiency.min, ranges.energyEfficiency.max) * weights.energyEfficiency
+      ) / totalWeight;
+    });
+    return scores;
+  }, [visibleModels, weights]);
 
   const sortedModels = useMemo(() => {
     return [...visibleModels].sort((a, b) => {
@@ -194,8 +237,55 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
             <Filter className="w-4 h-4" />
             {rtx5090Only ? 'RTX 5090 Only' : 'All Models'}
           </button>
+
+          <button
+            onClick={() => setShowWeights(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${showWeights ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Scoring Weights
+          </button>
         </div>
       </div>
+
+      {/* Configurable Scoring Weights */}
+      {showWeights && (
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Composite Score Weights</h3>
+              <p className="text-[10px] text-slate-500">Adjust how each metric contributes to the overall score. Higher weight = more influence.</p>
+            </div>
+            <div className="text-xs text-slate-400">
+              Total: {weights.accuracy + weights.executionTime + weights.cost + weights.carbonImpact + weights.energyEfficiency}%
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {([
+              { key: 'accuracy' as const, label: 'Accuracy', color: 'text-eco-700' },
+              { key: 'executionTime' as const, label: 'Speed', color: 'text-blue-700' },
+              { key: 'cost' as const, label: 'Cost', color: 'text-amber-700' },
+              { key: 'carbonImpact' as const, label: 'Carbon', color: 'text-emerald-700' },
+              { key: 'energyEfficiency' as const, label: 'Efficiency', color: 'text-purple-700' },
+            ]).map(({ key, label, color }) => (
+              <div key={key} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-semibold ${color}`}>{label}</span>
+                  <span className="text-xs text-slate-500">{weights[key]}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={weights[key]}
+                  onChange={(e) => setWeights(prev => ({ ...prev, [key]: parseInt(e.target.value) }))}
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* AI Analysis Box */}
       {analysis && (
@@ -261,6 +351,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
                    <input type="checkbox" className="rounded border-slate-300 text-eco-600 focus:ring-eco-500" />
                 </th>
                 <th className="p-4 min-w-[200px]">Model Name</th>
+                <th className="p-4 min-w-[100px]">Data Source</th>
                 <th onClick={() => handleSort('accuracy')} className="p-4 cursor-pointer hover:bg-slate-100 transition-colors">
                   <div className="flex items-center gap-2">Accuracy <SortIcon field="accuracy" /></div>
                 </th>
@@ -275,6 +366,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
                 </th>
                  <th onClick={() => handleSort('energyEfficiency')} className="p-4 cursor-pointer hover:bg-slate-100 transition-colors">
                   <div className="flex items-center gap-2">Efficiency (Tok/W) <SortIcon field="energyEfficiency" /></div>
+                </th>
+                <th className="p-4 min-w-[80px]">
+                  <div className="flex items-center gap-1 text-indigo-600">Score</div>
                 </th>
               </tr>
             </thead>
@@ -292,6 +386,29 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
                   <td className="p-4">
                     <div className="font-medium text-slate-800">{model.name}</div>
                     <div className="text-xs text-slate-400">{model.provider}</div>
+                  </td>
+                  <td className="p-4">
+                    {(() => {
+                      const conf = CONFIDENCE_CONFIG[model.provenance.confidence];
+                      return (
+                        <div className="group relative">
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold ${conf.color}`}>
+                            <span>{conf.icon}</span>
+                            {conf.label}
+                          </span>
+                          {/* Tooltip */}
+                          <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-900 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                            <div className="font-semibold mb-1">{model.provenance.source}</div>
+                            {model.provenance.methodology && <p className="text-slate-300 leading-relaxed">{model.provenance.methodology}</p>}
+                            {model.provenance.lastVerified && <p className="text-slate-400 mt-1">Verified: {model.provenance.lastVerified}</p>}
+                            {model.provenance.citation && (
+                              <p className="text-blue-300 mt-1 truncate">Ref: {model.provenance.citation}</p>
+                            )}
+                            <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </td>
                   
                   {/* Metric Cells with Heatmap coloring */}
@@ -319,6 +436,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
                     <span className={`px-2 py-1 rounded text-xs transition-colors duration-500 ${getCellColor(model.energyEfficiency, ranges.energyEfficiency.min, ranges.energyEfficiency.max)}`}>
                         {model.energyEfficiency}
                     </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(compositeScores[model.id] || 0) * 100}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold text-indigo-700">{((compositeScores[model.id] || 0) * 100).toFixed(0)}</span>
+                    </div>
                   </td>
                 </tr>
               ))}

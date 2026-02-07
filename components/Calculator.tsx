@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2 } from 'lucide-react';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2, Save, Clock, ArrowRight } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 
 // ============================================================
@@ -379,10 +379,21 @@ const PRESET_TEMPLATES = [
   }
 ];
 
-// 本地存储 key
+// Local storage keys
 const STORAGE_KEY = 'ecocompute_calculator_state';
+const HISTORY_KEY = 'ecocompute_calculator_history';
+const MAX_HISTORY = 50;
 
-// 扩展状态类型
+interface HistoryEntry {
+  id: string;
+  timestamp: string;
+  label: string;
+  state: ExtendedState;
+  compareState?: ExtendedState | null;
+  results: { monthlyCost: number; co2: number; kwh: number };
+}
+
+// Extended state type
 interface ExtendedState extends CalculatorState {
   tokensPerDay?: number;
   apiModel?: string;
@@ -442,8 +453,84 @@ export const Calculator: React.FC = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [customFormula, setCustomFormula] = useState('');
   const [showCheatSheet, setShowCheatSheet] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(HISTORY_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const templateDropdownRef = useRef<HTMLDivElement>(null);
   const formulaInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist history to localStorage
+  useEffect(() => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }, [history]);
+
+  const saveToHistory = (label?: string) => {
+    const hw = HARDWARE_OPTIONS.find(h => h.value === state.hardware);
+    const power = hw ? hw.power : 200;
+    const kwh = (power * state.count * state.hours * state.pue) / 1000;
+    const pricing = API_PRICING[state.apiModel as keyof typeof API_PRICING] || API_PRICING['deepseek-v3'];
+    const tokens = state.tokensPerDay || 100000;
+    const dailyCost = tieredCost(tokens, pricing.input, pricing.output);
+    const co2 = carbonPenalty(kwh * 0.475);
+    const entry: HistoryEntry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      timestamp: new Date().toISOString(),
+      label: label || `${pricing.name} · ${tokens >= 1e6 ? (tokens/1e6).toFixed(1)+'M' : (tokens/1e3).toFixed(0)+'K'} tok/day`,
+      state: { ...state },
+      compareState: compareState ? { ...compareState } : null,
+      results: { monthlyCost: dailyCost * 30, co2, kwh },
+    };
+    setHistory(prev => [entry, ...prev].slice(0, MAX_HISTORY));
+  };
+
+  const restoreFromHistory = (entry: HistoryEntry) => {
+    setState(entry.state);
+    if (entry.compareState) {
+      setCompareState(entry.compareState);
+      setShowChart('compare');
+    }
+    setShowHistory(false);
+  };
+
+  const clearHistory = () => setHistory([]);
+
+  const exportHistory = () => {
+    const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), entries: history }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ecocompute_history_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const importHistory = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target?.result as string);
+          if (data.entries && Array.isArray(data.entries)) {
+            setHistory(prev => [...data.entries, ...prev].slice(0, MAX_HISTORY));
+          }
+        } catch { alert('Invalid history file'); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
   // 点击外部关闭模板下拉菜单
   useEffect(() => {
@@ -866,11 +953,60 @@ export const Calculator: React.FC = () => {
             <input type="file" accept=".json" onChange={importConfig} className="hidden" />
           </label>
           
+          <button onClick={() => saveToHistory()} className="p-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 print:hidden" title="Save to History">
+            <Save className="w-4 h-4" />
+          </button>
+
+          <button onClick={() => setShowHistory(!showHistory)} className={`p-2 rounded-lg print:hidden ${showHistory ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`} title="History">
+            <Clock className="w-4 h-4" />
+          </button>
+
           <button onClick={resetToDefault} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Reset">
             <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
+
+      {/* History Panel */}
+      {showHistory && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 animate-fade-in print:hidden">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-indigo-600" />
+              Calculation History
+              <span className="text-xs font-normal text-slate-400">({history.length} entries, persisted locally)</span>
+            </h3>
+            <div className="flex items-center gap-2">
+              <button onClick={importHistory} className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200">Import</button>
+              <button onClick={exportHistory} className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200" disabled={history.length === 0}>Export</button>
+              <button onClick={clearHistory} className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100" disabled={history.length === 0}>Clear</button>
+            </div>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-4">No history yet. Click the save button to record a calculation.</p>
+          ) : (
+            <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
+              {history.map(entry => (
+                <button
+                  key={entry.id}
+                  onClick={() => restoreFromHistory(entry)}
+                  className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 transition-colors text-left group"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-700 truncate">{entry.label}</div>
+                    <div className="text-[10px] text-slate-400">{new Date(entry.timestamp).toLocaleString()}</div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 text-xs">
+                    <span className="text-eco-700 font-medium">${entry.results.monthlyCost.toFixed(0)}/mo</span>
+                    <span className="text-slate-500">{entry.results.co2.toFixed(1)} kgCO₂</span>
+                    <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="grid lg:grid-cols-12 gap-4">
