@@ -268,25 +268,25 @@ const decodeStateFromURL = (): { state: any; compareState: any } | null => {
   return null;
 };
 
-// API 成本数据 ($/1M tokens) - 2026年2月最新价格
+// API Cost Data ($/1M tokens) - Feb 2026 Latest Pricing
 const API_PRICING = {
-  'deepseek-v3': { input: 0.27, output: 1.10, name: 'DeepSeek-V3 (671B)', desc: '满血版 MoE 架构' },
-  'deepseek-v3-lite': { input: 0.07, output: 0.28, name: 'DeepSeek-V3-Lite', desc: '蒸馏版，性价比之王' },
-  'deepseek-r1': { input: 0.55, output: 2.19, name: 'DeepSeek-R1', desc: '推理增强版' },
-  'gpt-4o': { input: 2.50, output: 10.00, name: 'GPT-4o', desc: 'OpenAI 旗舰' },
-  'gpt-4o-mini': { input: 0.15, output: 0.60, name: 'GPT-4o-mini', desc: 'OpenAI 轻量版' },
-  'claude-3.5-sonnet': { input: 3.00, output: 15.00, name: 'Claude 3.5 Sonnet', desc: 'Anthropic 旗舰' },
-  'gemini-1.5-flash': { input: 0.075, output: 0.30, name: 'Gemini 1.5 Flash', desc: 'Google 快速版' },
-  'gemini-2.0-flash': { input: 0.10, output: 0.40, name: 'Gemini 2.0 Flash', desc: 'Google 最新版' },
+  'deepseek-v3': { input: 0.27, output: 1.10, name: 'DeepSeek-V3 (671B)', desc: 'Full MoE Architecture' },
+  'deepseek-v3-lite': { input: 0.07, output: 0.28, name: 'DeepSeek-V3-Lite', desc: 'Distilled, Best Value' },
+  'deepseek-r1': { input: 0.55, output: 2.19, name: 'DeepSeek-R1', desc: 'Reasoning Enhanced' },
+  'gpt-4o': { input: 2.50, output: 10.00, name: 'GPT-4o', desc: 'OpenAI Flagship' },
+  'gpt-4o-mini': { input: 0.15, output: 0.60, name: 'GPT-4o-mini', desc: 'OpenAI Lightweight' },
+  'claude-3.5-sonnet': { input: 3.00, output: 15.00, name: 'Claude 3.5 Sonnet', desc: 'Anthropic Flagship' },
+  'gemini-1.5-flash': { input: 0.075, output: 0.30, name: 'Gemini 1.5 Flash', desc: 'Google Fast' },
+  'gemini-2.0-flash': { input: 0.10, output: 0.40, name: 'Gemini 2.0 Flash', desc: 'Google Latest' },
 };
 
-// 预设模板库 - DeepSeek 主推案例在最前
+// Preset Template Library - DeepSeek featured cases first
 const PRESET_TEMPLATES = [
-  // ⭐ 主推案例：DeepSeek API 成本计算
+  // ⭐ Featured: DeepSeek API Cost Calculator
   {
     id: 'deepseek-api-cost',
-    name: '⭐ DeepSeek API 成本计算器',
-    description: '计算 DeepSeek V3 满血版 vs 蒸馏版的真实成本差异',
+    name: '⭐ DeepSeek API Cost Calculator',
+    description: 'Compare real cost differences between DeepSeek V3 Full vs Distilled',
     config: { hardware: 'rtx5090', count: 1, hours: 24, pue: 1.2, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'deepseek-v3-lite',
@@ -295,8 +295,8 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'deepseek-vs-gpt',
-    name: '🔥 DeepSeek vs GPT-4o 成本对比',
-    description: '同等质量下，DeepSeek 能省多少钱？',
+    name: '🔥 DeepSeek vs GPT-4o Cost Comparison',
+    description: 'How much can DeepSeek save at comparable quality?',
     config: { hardware: 'a100', count: 1, hours: 24, pue: 1.2, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'gpt-4o',
@@ -304,8 +304,8 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'deepseek-r1-compare',
-    name: '🧠 DeepSeek-R1 推理版成本',
-    description: 'R1 推理增强版 vs 标准 V3 版本',
+    name: '🧠 DeepSeek-R1 Reasoning Cost',
+    description: 'R1 Reasoning Enhanced vs Standard V3',
     config: { hardware: 'h100', count: 1, hours: 24, pue: 1.1, region: 'global' },
     apiModel: 'deepseek-r1',
     compareModel: 'deepseek-v3',
@@ -313,16 +313,16 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'startup-api-budget',
-    name: '🚀 创业公司 API 预算',
-    description: '日均 100 万 tokens 的月度成本估算',
+    name: '🚀 Startup API Budget',
+    description: 'Monthly cost estimate for 1M tokens/day',
     config: { hardware: 'a100', count: 2, hours: 24, pue: 1.3, region: 'global' },
     apiModel: 'deepseek-v3-lite',
     tokensPerDay: 1000000
   },
   {
     id: 'enterprise-scale',
-    name: '🏢 企业级大规模调用',
-    description: '日均 1000 万 tokens 的成本对比',
+    name: '🏢 Enterprise Scale',
+    description: 'Cost comparison for 10M tokens/day',
     config: { hardware: 'h100', count: 8, hours: 24, pue: 1.2, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'claude-3.5-sonnet',
@@ -330,17 +330,17 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'personal-dev',
-    name: '👨‍💻 个人开发者日常',
-    description: '轻度使用场景的月度成本',
+    name: '👨‍💻 Personal Developer Daily',
+    description: 'Monthly cost for light usage scenarios',
     config: { hardware: 't4', count: 1, hours: 8, pue: 1.2, region: 'global' },
     apiModel: 'gemini-1.5-flash',
     tokensPerDay: 50000
   },
-  // ========== Template Gallery 三大行业模板 ==========
+  // ========== Template Gallery - Industry Templates ==========
   {
     id: 'infra-deepseek-openai',
-    name: '🏗️ AI 基础设施：DeepSeek vs OpenAI 深度成本评估',
-    description: '企业级 AI 基础设施选型：日均 500 万 tokens，8×H100 集群，DeepSeek-V3 vs GPT-4o 全维度对比',
+    name: '🏗️ AI Infrastructure: DeepSeek vs OpenAI Deep Cost Evaluation',
+    description: 'Enterprise AI infrastructure selection: 5M tokens/day, 8×H100 cluster, DeepSeek-V3 vs GPT-4o full-spectrum comparison',
     config: { hardware: 'h100', count: 8, hours: 24, pue: 1.15, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'gpt-4o',
@@ -353,8 +353,8 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'carbon-quota-trading',
-    name: '🌍 能源与环保：企业碳排放配额交易预测',
-    description: '大规模 GPU 集群碳排放评估：16×A100 全天运行，对比高效 vs 标准 PUE 的碳成本差异',
+    name: '🌍 Energy & Environment: Carbon Quota Trading Forecast',
+    description: 'Large-scale GPU cluster carbon assessment: 16×A100 running 24/7, comparing efficient vs standard PUE carbon cost',
     config: { hardware: 'a100', count: 16, hours: 24, pue: 1.4, region: 'global' },
     apiModel: 'deepseek-v3',
     compareModel: 'claude-3.5-sonnet',
@@ -366,8 +366,8 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'freelancer-net-income',
-    name: '💼 软件工程：自由职业者个人税后净收益建模',
-    description: '自由开发者 AI 工具成本分析：日均 10 万 tokens，对比 Gemini Flash vs GPT-4o-mini 的月度净成本',
+    name: '💼 Software Engineering: Freelancer Net Income Modeling',
+    description: 'Freelance developer AI tool cost analysis: 100K tokens/day, Gemini Flash vs GPT-4o-mini monthly net cost',
     config: { hardware: 't4', count: 1, hours: 10, pue: 1.2, region: 'global' },
     apiModel: 'gemini-2.0-flash',
     compareModel: 'gpt-4o-mini',
