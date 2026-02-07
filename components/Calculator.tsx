@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2, Save, Clock, ArrowRight } from 'lucide-react';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2, Save, Clock, ArrowRight, Image } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 
 // ============================================================
@@ -24,9 +24,9 @@ const FORMULA_VARS: Record<string, string> = {
 };
 
 const FORMULA_FUNCTIONS: { name: string; syntax: string; desc: string; example: string }[] = [
-  { name: 'IF', syntax: 'IF(cond, then, else)', desc: 'Conditional logic', example: 'IF(tokens > 1000000, 0.9, 1.0)' },
-  { name: 'MIN', syntax: 'MIN(a, b)', desc: 'Minimum of two values', example: 'MIN(tokens * 0.001, 500)' },
-  { name: 'MAX', syntax: 'MAX(a, b)', desc: 'Maximum of two values', example: 'MAX(tokens * 0.0001, 10)' },
+  { name: 'IF', syntax: 'IF(cond, then, else)', desc: 'Conditional logic (free tier)', example: 'IF(tokens > 1000000, (tokens - 1000000) * input_price / 1000000, 0)' },
+  { name: 'MIN', syntax: 'MIN(a, b)', desc: 'Cap maximum value', example: 'MIN(tokens * input_price / 1000000, 500)' },
+  { name: 'MAX', syntax: 'MAX(a, b)', desc: 'Set minimum threshold', example: 'MAX((tokens - 100000) * input_price / 1000000, 0)' },
   { name: 'ROUND', syntax: 'ROUND(value, decimals)', desc: 'Round to N decimals', example: 'ROUND(tokens * input_price / 1000000, 2)' },
   { name: 'ABS', syntax: 'ABS(value)', desc: 'Absolute value', example: 'ABS(input_price - output_price)' },
   { name: 'SQRT', syntax: 'SQRT(value)', desc: 'Square root', example: 'SQRT(gpu_count) * 100' },
@@ -701,6 +701,89 @@ export const Calculator: React.FC = () => {
     window.print();
   };
 
+  const generateReportImage = async () => {
+    // Create a temporary container for the report
+    const reportContainer = document.createElement('div');
+    reportContainer.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 800px; background: white; padding: 32px; font-family: system-ui;';
+    
+    const insight = generateInsight();
+    const hw = HARDWARE_OPTIONS.find(h => h.value === state.hardware);
+    
+    reportContainer.innerHTML = `
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 24px; border-radius: 16px; margin-bottom: 24px;">
+        <h1 style="color: white; font-size: 28px; font-weight: bold; margin: 0 0 8px 0;">EcoCompute Analysis Report</h1>
+        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0;">${new Date().toLocaleDateString()}</p>
+      </div>
+      
+      <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <h2 style="font-size: 16px; font-weight: bold; color: #1e293b; margin: 0 0 12px 0;">Configuration</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+          <div><strong>Hardware:</strong> ${hw?.label || state.hardware}</div>
+          <div><strong>GPU Count:</strong> ${state.count}</div>
+          <div><strong>Hours/Day:</strong> ${state.hours}</div>
+          <div><strong>PUE:</strong> ${state.pue}</div>
+          <div><strong>API Model:</strong> ${results.pricing.name}</div>
+          <div><strong>Tokens/Day:</strong> ${(state.tokensPerDay || 0).toLocaleString()}</div>
+        </div>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; border-radius: 12px; border: 2px solid #10b981;">
+          <div style="font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 4px;">DAILY COST</div>
+          <div style="font-size: 32px; font-weight: bold; color: #1e293b;">${formatCurrency(results.dailyCost)}</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); padding: 20px; border-radius: 12px; border: 2px solid #8b5cf6;">
+          <div style="font-size: 12px; color: #7c3aed; font-weight: 600; margin-bottom: 4px;">MONTHLY COST</div>
+          <div style="font-size: 32px; font-weight: bold; color: #1e293b;">${formatCurrency(results.monthlyCost)}</div>
+        </div>
+      </div>
+      
+      <div style="background: #fef3c7; padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+        <div style="font-size: 14px; font-weight: bold; color: #92400e; margin-bottom: 8px;">💡 Key Insight</div>
+        <p style="font-size: 13px; color: #78350f; margin: 0 0 8px 0;">${insight.main}</p>
+        <p style="font-size: 12px; color: #92400e; margin: 0;">${insight.detail}</p>
+      </div>
+      
+      <div style="background: #f1f5f9; padding: 16px; border-radius: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 12px; color: #475569;">
+          <div><strong>Energy:</strong> ${results.kwh.toFixed(2)} kWh/day</div>
+          <div><strong>Carbon:</strong> ${results.co2.toFixed(2)} kg CO₂/day</div>
+          <div><strong>Power:</strong> ${results.power * state.count} W</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8;">
+        Generated by EcoCompute · https://hongping-zh.github.io/ecocompute-dynamic-eval/
+      </div>
+    `;
+    
+    document.body.appendChild(reportContainer);
+    
+    try {
+      // Use html2canvas if available, otherwise fall back to basic screenshot
+      if (typeof (window as any).html2canvas !== 'undefined') {
+        const canvas = await (window as any).html2canvas(reportContainer, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+        });
+        canvas.toBlob((blob: Blob | null) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ecocompute-report-${Date.now()}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        });
+      } else {
+        alert('Report image generation requires html2canvas library. Please use Print/PDF instead.');
+      }
+    } finally {
+      document.body.removeChild(reportContainer);
+    }
+  };
+
   const handleChange = (field: keyof ExtendedState, value: string | number) => {
     setState(prev => ({ ...prev, [field]: value }));
   };
@@ -944,6 +1027,10 @@ export const Calculator: React.FC = () => {
             <Download className="w-4 h-4" />
           </button>
           
+          <button onClick={generateReportImage} className="p-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 print:hidden" title="Generate Report Image">
+            <Image className="w-4 h-4" />
+          </button>
+
           <button onClick={printReport} className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 print:hidden" title="Print Report / Save as PDF">
             <Printer className="w-4 h-4" />
           </button>
@@ -1215,6 +1302,25 @@ export const Calculator: React.FC = () => {
                     : 'bg-slate-50 border-slate-200 text-slate-700 focus:ring-indigo-400'
                 } focus:outline-none focus:ring-1`}
               />
+
+              {/* Formula Preview - Real-time parsing */}
+              {customFormula && (
+                <div className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="text-[10px] text-slate-500 mb-1">Preview:</div>
+                  <div className="text-[11px] font-mono text-slate-700 leading-relaxed">
+                    {(() => {
+                      let preview = customFormula;
+                      // Replace variables with actual values
+                      Object.entries(formulaVars).forEach(([name, val]) => {
+                        preview = preview.replace(new RegExp(`\\b${name}\\b`, 'g'), `<span class="text-indigo-600 font-semibold">${val}</span>`);
+                      });
+                      // Highlight functions
+                      preview = preview.replace(/\b(IF|MIN|MAX|ROUND|ABS|SQRT|LOG|POW)\b/g, '<span class="text-purple-600 font-semibold">$1</span>');
+                      return <span dangerouslySetInnerHTML={{ __html: preview }} />;
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* Formula Feedback */}
               {customFormula && !formulaValidation.valid && (
