@@ -43,3 +43,64 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ============================================================
+   Print Styles — 可交付 PDF 简报
+   ============================================================ */
+@media print {
+  /* 隐藏非报告元素 */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 隐藏侧边栏、导航、FAB 按钮等 */
+  nav, aside,
+  .print\:hidden,
+  button:not(.print-keep),
+  [data-print-hide],
+  .animate-ping {
+    display: none !important;
+  }
+
+  /* 报告标题区 */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* 主内容全宽 */
+  .max-w-6xl {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Grid 改为单列打印 */
+  .lg\:grid-cols-12 {
+    grid-template-columns: 1fr !important;
+  }
+  .lg\:col-span-4 {
+    grid-column: span 1 !important;
+  }
+
+  /* 卡片去阴影 */
+  .shadow-sm, .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* 圆角保留但边框加深 */
+  .rounded-2xl, .rounded-xl {
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* 确保图表可见 */
+  .recharts-wrapper {
+    page-break-inside: avoid;
+  }
+
+  /* 页脚 */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}

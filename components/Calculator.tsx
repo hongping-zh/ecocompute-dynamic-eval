@@ -1,8 +1,103 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
+
+// ============================================================
+// 公式语法检查器 + 安全求值
+// ============================================================
+interface FormulaValidation {
+  valid: boolean;
+  error?: string;
+  result?: number;
+}
+
+const FORMULA_VARS: Record<string, string> = {
+  tokens: 'Tokens/Day',
+  input_price: 'Input price ($/1M)',
+  output_price: 'Output price ($/1M)',
+  gpu_count: 'GPU count',
+  hours: 'Hours/Day',
+  pue: 'PUE value',
+  power: 'GPU power (W)',
+};
+
+const FORMULA_FUNCTIONS: { name: string; syntax: string; desc: string; example: string }[] = [
+  { name: 'IF', syntax: 'IF(cond, then, else)', desc: 'Conditional logic', example: 'IF(tokens > 1000000, 0.9, 1.0)' },
+  { name: 'MIN', syntax: 'MIN(a, b)', desc: 'Minimum of two values', example: 'MIN(tokens * 0.001, 500)' },
+  { name: 'MAX', syntax: 'MAX(a, b)', desc: 'Maximum of two values', example: 'MAX(tokens * 0.0001, 10)' },
+  { name: 'ROUND', syntax: 'ROUND(value, decimals)', desc: 'Round to N decimals', example: 'ROUND(tokens * input_price / 1000000, 2)' },
+  { name: 'ABS', syntax: 'ABS(value)', desc: 'Absolute value', example: 'ABS(input_price - output_price)' },
+  { name: 'SQRT', syntax: 'SQRT(value)', desc: 'Square root', example: 'SQRT(gpu_count) * 100' },
+  { name: 'LOG', syntax: 'LOG(value)', desc: 'Natural logarithm', example: 'LOG(tokens) * 10' },
+  { name: 'POW', syntax: 'POW(base, exp)', desc: 'Power function', example: 'POW(gpu_count, 0.8) * 100' },
+];
+
+const validateFormula = (formula: string, vars: Record<string, number>): FormulaValidation => {
+  if (!formula.trim()) return { valid: true };
+
+  // Check balanced parentheses
+  let depth = 0;
+  for (const ch of formula) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+    if (depth < 0) return { valid: false, error: 'Syntax error: unexpected closing parenthesis ")"' };
+  }
+  if (depth > 0) return { valid: false, error: `Syntax error: missing ${depth} closing parenthesis ")"` };
+
+  // Check for dangerous patterns
+  if (/\b(eval|Function|window|document|fetch|import|require)\b/i.test(formula)) {
+    return { valid: false, error: 'Security error: forbidden keyword detected' };
+  }
+
+  try {
+    // Replace custom functions with JS equivalents
+    let expr = formula
+      .replace(/\bIF\s*\(/gi, '((__c,__t,__e) => __c ? __t : __e)(')
+      .replace(/\bMIN\s*\(/gi, 'Math.min(')
+      .replace(/\bMAX\s*\(/gi, 'Math.max(')
+      .replace(/\bROUND\s*\(/gi, '((__v,__d) => { const __f=Math.pow(10,__d); return Math.round(__v*__f)/__f; })(')
+      .replace(/\bABS\s*\(/gi, 'Math.abs(')
+      .replace(/\bSQRT\s*\(/gi, 'Math.sqrt(')
+      .replace(/\bLOG\s*\(/gi, 'Math.log(')
+      .replace(/\bPOW\s*\(/gi, 'Math.pow(');
+
+    // Replace variable names with values
+    for (const [name, val] of Object.entries(vars)) {
+      expr = expr.replace(new RegExp(`\\b${name}\\b`, 'g'), String(val));
+    }
+
+    // Check for remaining unknown identifiers (except Math)
+    const unknowns = expr.match(/\b[a-zA-Z_]\w*\b/g)?.filter(
+      id => !['Math', 'min', 'max', 'abs', 'sqrt', 'log', 'pow', 'round', 'true', 'false', 'Infinity', 'NaN'].includes(id)
+        && !id.startsWith('__')
+    );
+    if (unknowns && unknowns.length > 0) {
+      return { valid: false, error: `Unknown variable: "${unknowns[0]}". Available: ${Object.keys(vars).join(', ')}` };
+    }
+
+    // Safe eval via Function constructor (no access to global scope)
+    const fn = new Function('Math', `"use strict"; return (${expr});`);
+    const result = fn(Math);
+
+    if (typeof result !== 'number' || isNaN(result)) {
+      return { valid: false, error: 'Formula returned non-numeric result' };
+    }
+    if (!isFinite(result)) {
+      return { valid: false, error: 'Formula returned Infinity (division by zero?)' };
+    }
+
+    return { valid: true, result };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown error';
+    // Make error messages more user-friendly
+    if (msg.includes('Unexpected token')) {
+      return { valid: false, error: `Syntax error: unexpected character near "${msg.split("'")[1] || '?'}"` };
+    }
+    return { valid: false, error: `Formula error: ${msg}` };
+  }
+};
 
 // ============================================================
 // Slider + Number Input 双向绑定组件
@@ -304,7 +399,10 @@ export const Calculator: React.FC = () => {
   const [showChart, setShowChart] = useState<'pie' | 'bar' | 'compare' | null>('compare');
   const [configCollapsed, setConfigCollapsed] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [customFormula, setCustomFormula] = useState('');
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
+  const formulaInputRef = useRef<HTMLTextAreaElement>(null);
 
   // 点击外部关闭模板下拉菜单
   useEffect(() => {
@@ -447,6 +545,33 @@ export const Calculator: React.FC = () => {
     }
     return null;
   }, [sensitivityData, compareState]);
+
+  // 公式实时验证
+  const formulaVars = useMemo(() => ({
+    tokens: state.tokensPerDay || 100000,
+    input_price: results.pricing.input,
+    output_price: results.pricing.output,
+    gpu_count: state.count,
+    hours: state.hours,
+    pue: state.pue,
+    power: results.power,
+  }), [state, results]);
+
+  const formulaValidation = useMemo(
+    () => validateFormula(customFormula, formulaVars),
+    [customFormula, formulaVars]
+  );
+
+  // 插入函数到公式输入框
+  const insertFunction = (example: string) => {
+    setCustomFormula(prev => prev ? `${prev} + ${example}` : example);
+    formulaInputRef.current?.focus();
+  };
+
+  // 打印报告
+  const printReport = () => {
+    window.print();
+  };
 
   const handleChange = (field: keyof ExtendedState, value: string | number) => {
     setState(prev => ({ ...prev, [field]: value }));
@@ -687,8 +812,12 @@ export const Calculator: React.FC = () => {
             <span className="hidden sm:inline">{linkCopied ? 'Copied!' : 'Share'}</span>
           </button>
 
-          <button onClick={exportConfig} className="p-2 bg-eco-50 text-eco-700 rounded-lg hover:bg-eco-100" title="Export JSON">
+          <button onClick={exportConfig} className="p-2 bg-eco-50 text-eco-700 rounded-lg hover:bg-eco-100 print:hidden" title="Export JSON">
             <Download className="w-4 h-4" />
+          </button>
+          
+          <button onClick={printReport} className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 print:hidden" title="Print Report / Save as PDF">
+            <Printer className="w-4 h-4" />
           </button>
           
           <label className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 cursor-pointer" title="Import JSON">
@@ -843,6 +972,87 @@ export const Calculator: React.FC = () => {
                 <span className="text-xs text-eco-800">Volume discount applied: ~{results.discountPct}% off (tiered pricing for &gt;5M tokens/day)</span>
               </div>
             )}
+
+            {/* Custom Formula with Syntax Checker */}
+            <div className="space-y-1.5 border-t border-slate-100 pt-3 print:hidden">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Code2 className="w-3.5 h-3.5" />
+                  Custom Formula
+                </label>
+                <button
+                  onClick={() => setShowCheatSheet(!showCheatSheet)}
+                  className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded transition-colors ${showCheatSheet ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  <HelpCircle className="w-3 h-3" />
+                  Cheat Sheet
+                </button>
+              </div>
+
+              {/* Cheat Sheet Panel */}
+              {showCheatSheet && (
+                <div className="bg-slate-50 rounded-lg border border-slate-200 p-2.5 space-y-2 animate-fade-in">
+                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Variables (click to insert)</div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(FORMULA_VARS).map(([name, desc]) => (
+                      <button
+                        key={name}
+                        onClick={() => { setCustomFormula(prev => prev ? `${prev} ${name}` : name); formulaInputRef.current?.focus(); }}
+                        className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono text-indigo-700 hover:bg-indigo-50 transition-colors"
+                        title={desc}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-1">Functions (click to insert example)</div>
+                  <div className="space-y-1">
+                    {FORMULA_FUNCTIONS.map(fn => (
+                      <button
+                        key={fn.name}
+                        onClick={() => insertFunction(fn.example)}
+                        className="w-full text-left px-2 py-1 bg-white border border-slate-200 rounded hover:bg-indigo-50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold text-indigo-700">{fn.syntax}</span>
+                          <span className="text-[9px] text-slate-400">{fn.desc}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Formula Input */}
+              <textarea
+                ref={formulaInputRef}
+                value={customFormula}
+                onChange={(e) => setCustomFormula(e.target.value)}
+                placeholder="e.g. tokens * input_price / 1000000 * IF(tokens > 5000000, 0.9, 1.0)"
+                rows={2}
+                className={`w-full p-2 text-xs font-mono rounded-lg border transition-colors resize-none ${
+                  customFormula && !formulaValidation.valid
+                    ? 'bg-red-50 border-red-300 text-red-800 focus:ring-red-400'
+                    : customFormula && formulaValidation.valid && formulaValidation.result !== undefined
+                    ? 'bg-eco-50 border-eco-300 text-eco-800 focus:ring-eco-400'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 focus:ring-indigo-400'
+                } focus:outline-none focus:ring-1`}
+              />
+
+              {/* Formula Feedback */}
+              {customFormula && !formulaValidation.valid && (
+                <div className="flex items-start gap-1.5 px-2 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-red-700 leading-tight">{formulaValidation.error}</span>
+                </div>
+              )}
+              {customFormula && formulaValidation.valid && formulaValidation.result !== undefined && (
+                <div className="flex items-center justify-between px-2 py-1.5 bg-eco-50 border border-eco-200 rounded-lg">
+                  <span className="text-[11px] text-eco-700">Formula result:</span>
+                  <span className="text-sm font-bold font-mono text-eco-800">{formatCurrency(formulaValidation.result)}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

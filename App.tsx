@@ -69,7 +69,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900 font-sans">
       {/* Sidebar */}
-      <aside className="w-20 lg:w-64 bg-slate-900 text-white flex flex-col fixed h-full z-50 transition-all duration-300">
+      <aside className="w-20 lg:w-64 bg-slate-900 text-white flex flex-col fixed h-full z-50 transition-all duration-300 print:hidden">
         <div className="p-6 flex items-center gap-3 border-b border-slate-800">
           <div className="w-8 h-8 bg-eco-500 rounded-lg flex items-center justify-center flex-shrink-0">
             <Leaf className="w-5 h-5 text-white" />
@@ -144,7 +144,7 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-20 lg:ml-64 p-4 lg:p-8 h-screen overflow-hidden flex flex-col">
+      <main className="flex-1 ml-20 lg:ml-64 p-4 lg:p-8 h-screen overflow-hidden flex flex-col print:ml-0 print:p-4">
         <header className="mb-6 flex justify-between items-center">
             <div>
                  <h1 className="text-2xl font-bold text-slate-800">
@@ -189,7 +189,9 @@ const App: React.FC = () => {
       </main>
 
       {/* AI Tools FAB */}
-      <AITools />
+      <div className="print:hidden">
+        <AITools />
+      </div>
 
       {/* Settings Panel */}
       <SettingsPanel 
