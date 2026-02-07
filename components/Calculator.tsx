@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { HARDWARE_OPTIONS } from '../constants';
-import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2, Save, Clock, ArrowRight, Image } from 'lucide-react';
+import { Leaf, Cloud, Download, Upload, RotateCcw, BookOpen, ChevronDown, ChevronUp, Sparkles, GitCompare, X, Link2, Check, TrendingUp, AlertTriangle, Printer, HelpCircle, Code2, Save, Clock, ArrowRight, Image, Share2 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 
 // ============================================================
@@ -582,23 +582,90 @@ export const Calculator: React.FC = () => {
   }, [state]);
 
   // 复制分享链接
-  const copyShareLink = async () => {
+  const copyShareLink = () => {
     const url = encodeStateToURL(state, compareState);
-    try {
-      await navigator.clipboard.writeText(url);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (e) {
-      // Fallback for older browsers
-      const input = document.createElement('input');
-      input.value = url;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand('copy');
-      document.body.removeChild(input);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const shareAsTemplate = () => {
+    const hw = HARDWARE_OPTIONS.find(h => h.value === state.hardware);
+    const pricing = API_PRICING[state.apiModel as keyof typeof API_PRICING] || API_PRICING['deepseek-v3'];
+    
+    const templateData = {
+      hardware: state.hardware,
+      hardwareLabel: hw?.label || state.hardware,
+      count: state.count,
+      hours: state.hours,
+      pue: state.pue,
+      apiModel: state.apiModel,
+      apiModelName: pricing.name,
+      tokensPerDay: state.tokensPerDay || 100000,
+      monthlyCost: results.monthlyCost,
+      co2: results.co2,
+    };
+    
+    const issueTitle = `[Template] ${pricing.name} - ${(templateData.tokensPerDay / 1000000).toFixed(1)}M tokens/day`;
+    const issueBody = `## Template Submission
+
+**Use Case Name**: [Please describe your use case, e.g., "Customer Support Chatbot"]
+
+**Category**: [Choose: Software Engineering / Customer Support / Content Creation / Research / Education / Enterprise]
+
+**Description**: [Explain the scenario, team size, workload pattern]
+
+---
+
+### Configuration
+
+- **API Model**: ${templateData.apiModelName}
+- **Tokens/Day**: ${templateData.tokensPerDay.toLocaleString()}
+- **Hardware**: ${templateData.hardwareLabel}
+- **GPU Count**: ${templateData.count}
+- **Hours/Day**: ${templateData.hours}
+- **PUE**: ${templateData.pue}
+
+### Estimated Costs
+
+- **Monthly Cost**: $${templateData.monthlyCost.toFixed(2)}
+- **Daily CO₂**: ${templateData.co2.toFixed(2)} kg
+
+---
+
+### Template Code
+
+\`\`\`typescript
+{
+  id: 'your-template-id', // Please suggest a unique ID
+  name: 'Your Template Name',
+  description: 'Brief description',
+  config: {
+    hardware: '${templateData.hardware}',
+    count: ${templateData.count},
+    hours: ${templateData.hours},
+    pue: ${templateData.pue},
+    region: 'global'
+  },
+  tokensPerDay: ${templateData.tokensPerDay},
+  apiModel: '${templateData.apiModel}',
+  gallery: true,
+  galleryCategory: 'Your Category',
+  galleryIcon: '🎯', // Choose an emoji
+  galleryColor: 'indigo' // Choose: eco, blue, purple, amber, rose, indigo
+}
+\`\`\`
+
+---
+
+**Checklist**:
+- [ ] I've tested this configuration in the calculator
+- [ ] The use case is realistic and helpful for others
+- [ ] I've provided context about the workload
+`;
+
+    const githubUrl = `https://github.com/hongping-zh/ecocompute-dynamic-eval/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=template`;
+    window.open(githubUrl, '_blank');
   };
 
   // 输入验证
@@ -1021,6 +1088,15 @@ export const Calculator: React.FC = () => {
           >
             {linkCopied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
             <span className="hidden sm:inline">{linkCopied ? 'Copied!' : 'Share'}</span>
+          </button>
+
+          <button 
+            onClick={shareAsTemplate}
+            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-medium transition-colors print:hidden"
+            title="Share as community template"
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Template</span>
           </button>
 
           <button onClick={exportConfig} className="p-2 bg-eco-50 text-eco-700 rounded-lg hover:bg-eco-100 print:hidden" title="Export JSON">

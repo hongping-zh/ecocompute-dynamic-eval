@@ -7,8 +7,9 @@ import { SettingsPanel, ApiConfig, loadApiConfig } from './components/SettingsPa
 import { Methodology } from './components/Methodology';
 import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
 import { Pricing } from './components/Pricing';
+import { ApiCostComparison } from './components/ApiCostComparison';
 import { AITools } from './components/AITools';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, CreditCard } from 'lucide-react';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, CreditCard, DollarSign } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -126,6 +127,14 @@ const App: React.FC = () => {
             <CreditCard className="w-5 h-5 flex-shrink-0" />
             <span className="hidden lg:block font-medium">Pricing</span>
           </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.API_COST_COMPARISON)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.API_COST_COMPARISON ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <DollarSign className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">API Costs</span>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-3">
@@ -163,6 +172,7 @@ const App: React.FC = () => {
                     {view === AppView.DEEPSEEK_VS_GPT && 'DeepSeek vs GPT'}
                     {view === AppView.METHODOLOGY && 'Methodology & Data Sources'}
                     {view === AppView.PRICING && 'Pricing & Plans'}
+                    {view === AppView.API_COST_COMPARISON && 'AI API Cost Comparison'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
@@ -171,6 +181,7 @@ const App: React.FC = () => {
                     {view === AppView.DEEPSEEK_VS_GPT && 'A practical workflow to compare cost and carbon impact for your workload.'}
                     {view === AppView.METHODOLOGY && 'How the metrics are measured and how estimates are derived.'}
                     {view === AppView.PRICING && 'Choose the right plan for your team and use case.'}
+                    {view === AppView.API_COST_COMPARISON && 'Compare pricing across GPT-4, Claude, Gemini, DeepSeek, and more.'}
                 </p>
             </div>
             
@@ -197,6 +208,7 @@ const App: React.FC = () => {
             {view === AppView.DEEPSEEK_VS_GPT && <DeepSeekVsGpt onOpenCalculator={() => openCalculatorTemplate('deepseek-vs-gpt')} />}
             {view === AppView.METHODOLOGY && <Methodology />}
             {view === AppView.PRICING && <Pricing />}
+            {view === AppView.API_COST_COMPARISON && <ApiCostComparison />}
         </div>
       </main>
 
