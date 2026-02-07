@@ -5,133 +5,110 @@
 
 ---
 
-## 当前状态 (v1.x)
+## 当前状态 (v1.2) ✅ IMPLEMENTED
 
-- 纯前端静态计算器
-- 手动选择模型对比
-- 导出 JSON 已预埋 `decision_trace` 数据结构（schema v0.2.0）
-- `policy_version: "manual_v1"` — 人工选择阶段
+- **Execution Control Plane** 已实现 — `execute(input, objective, constraints)`
+- **Provider Adapter** 已实现 — `services/providers/` 插件化架构
+- **Capability Registry** 已实现 — 每个 provider 声明 `ProviderCapability`
+- **Policy-based Routing** 已实现 — 5 种 objective 加权评分
+- **Execution Trace** 已实现 — 每次调用自动记录，可导出为 dataset JSON
+- **AI Tools FAB** 已实现 — 通过 execute() 统一调度所有 AI 功能
+- 导出 JSON 已预埋 `decision_trace` 数据结构（schema v0.3.0）
 
 ---
 
-## Step 1: Unified Execution API
+## Step 1: Unified Execution API ✅ DONE
 
-**目标**: 统一调用入口，消除 provider 耦合
+**实现文件**: `services/engine.ts`
 
-```python
-# ✅ 统一入口
-execute(
-    task,
-    constraints={
-        "max_cost": 0.02,
-        "max_latency": 2000
+```typescript
+// Stateless function execution — not API calls
+const result = await execute(
+  {
+    input: { task_type, prompt, context },
+    objective: 'balanced',           // maximize_quality | minimize_cost | minimize_latency | minimize_carbon | balanced
+    constraints: {
+      preferred_provider: 'gemini',
+      fallback_providers: ['demo'],
+      max_cost_usd: 0.02,
+      max_latency_ms: 2000,
     },
-    policy="efficiency_policy"
-)
-
-# ❌ 不要这样
-call_openai()
-call_claude()
-call_deepseek()
+  },
+  apiKey,
+);
+// System internally handles: routing → policy → provider call → trace
 ```
 
-**关键设计**:
-- `task` — 包含 prompt、task_type、metadata
-- `constraints` — 成本上限、延迟上限、质量下限
-- `policy` — 路由策略（efficiency / quality / balanced / custom）
-- 返回统一的 `ExecutionResult` 对象
-
-**优先级**: 🔴 高 — 这是所有后续功能的基础
+**已实现**:
+- ✅ `execute()` 统一入口，stateless function
+- ✅ 5 种 objective 策略（quality / cost / latency / carbon / balanced）
+- ✅ 返回 `ExecutionResult` 含 data + routing decision + trace
+- ✅ 自动 fallback：主 provider 失败时降级到 demo
 
 ---
 
-## Step 2: Provider Adapter
+## Step 2: Provider Adapter ✅ DONE
 
-**目标**: 插件化 provider，新增模型无需修改路由核心
+**实现目录**: `services/providers/`
 
 ```
-providers/
-    base.py          # 抽象基类
-    openai.py        # GPT-4o, GPT-4o-mini
-    anthropic.py     # Claude 3.5 Sonnet
-    deepseek.py      # DeepSeek-V3, R1
-    google.py        # Gemini 1.5/2.0 Flash
-    local.py         # 本地部署模型 (vLLM / Ollama)
+services/providers/
+    index.ts         # Registry — getProvider(), getAllProviders()
+    demo.ts          # Demo mode (zero cost, simulated)
+    gemini.ts        # Google Gemini 2.0 Flash
+    openai.ts        # GPT-4o-mini
+    groq.ts          # Llama 3.1 8B (ultra-fast)
 ```
 
-```python
-class Provider:
-    name: str
-    models: list[str]
-
-    def run(self, task: Task) -> ProviderResult:
-        """统一接口，返回标准化结果"""
-        pass
-
-    def health_check(self) -> bool:
-        pass
-
-    def get_pricing(self, model: str) -> PricingInfo:
-        pass
+**统一接口** (`services/types.ts`):
+```typescript
+interface Provider {
+  id: ProviderId;
+  name: string;
+  capabilities: ProviderCapability[];
+  run(prompt, apiKey, model?): Promise<ProviderResult>;
+  healthCheck(): Promise<boolean>;
+}
 ```
 
-**关键设计**:
-- 每个 adapter 实现统一 `Provider` 接口
-- 自动注册机制（放入 `providers/` 目录即可被发现）
-- 内置 fallback：主 provider 失败时自动切换备选
-- 新增模型 = 新增一个 `.py` 文件，零修改路由核心
-
-**优先级**: 🔴 高
+**已实现**:
+- ✅ 每个 adapter 实现统一 `Provider` 接口
+- ✅ 注册机制：`providers/index.ts` 集中注册
+- ✅ 新增模型 = 新增一个 `.ts` 文件 + 注册一行，零修改路由核心
+- ✅ 内置 fallback：主 provider 失败时自动切换 demo
 
 ---
 
-## Step 3: Capability Registry（高级关键）
+## Step 3: Capability Registry ✅ DONE
 
-**目标**: 路由不仅看历史成本，还能基于模型能力推理
+**实现位置**: 每个 provider 的 `capabilities` 数组
 
-```yaml
-model_capabilities:
-  deepseek-v3:
-    coding_score: 0.88
-    reasoning_score: 0.82
-    creative_score: 0.75
-    latency_profile: "fast"      # fast / medium / slow
-    energy_profile: "efficient"  # efficient / moderate / heavy
-    max_context: 128000
-    supports_tools: true
-
-  gpt-4o:
-    coding_score: 0.92
-    reasoning_score: 0.90
-    creative_score: 0.88
-    latency_profile: "medium"
-    energy_profile: "heavy"
-    max_context: 128000
-    supports_tools: true
-
-  deepseek-v3-lite:
-    coding_score: 0.72
-    reasoning_score: 0.68
-    creative_score: 0.65
-    latency_profile: "fast"
-    energy_profile: "efficient"
-    max_context: 64000
-    supports_tools: false
+```typescript
+// 示例：gemini.ts
+capabilities: [{
+  provider: 'gemini',
+  model: 'gemini-2.0-flash',
+  quality_score: 0.88,
+  cost_per_1k_tokens: 0.00015,
+  avg_latency_ms: 800,
+  supports_vision: true,
+  supports_tools: true,
+  energy_profile: 'moderate',
+  task_strengths: ['analyze_leaderboard', 'chat_with_image', ...],
+}]
 ```
 
-**路由决策流程**:
+**路由决策流程** (已实现于 `engine.ts` 的 `route()` 函数):
 
 ```
 Task 进入
-  → 分析 task_type (coding / reasoning / creative / general)
-  → 查询 Capability Registry 筛选合格模型
-  → 应用 constraints 过滤（成本、延迟）
-  → 按 policy 排序
-  → 选择最优模型
-  → 执行 & 记录 Decision Trace
+  → 读取 objective (quality/cost/latency/carbon/balanced)
+  → 遍历所有 provider capabilities
+  → 过滤：vision 支持、成本上限、延迟上限
+  → 加权评分：quality × w1 + cost × w2 + latency × w3 + energy × w4 + task_bonus
+  → 选择最高分候选
+  → 执行 & 自动记录 ExecutionTrace
 ```
-
-**优先级**: 🟡 中 — 依赖 Step 1 & 2 完成后
 
 ---
 
@@ -149,12 +126,31 @@ Task 进入
 
 ---
 
+## Category Moat
+
+当你拥有 **policy + routing + execution dataset**，你就不是工具。
+
+你是：🔥 **AI Execution Control Plane**。
+
+```
+EcoCompute 拥有的护城河：
+┌─────────────────────────────────────────┐
+│  Policy Engine (5 objectives)           │
+│  + Provider Routing (capability-based)  │
+│  + Execution Dataset (trace log)        │
+│  = AI Execution Control Plane           │
+└─────────────────────────────────────────┘
+```
+
+---
+
 ## 里程碑
 
 | 版本 | 内容 | 状态 |
 |------|------|------|
 | v1.0 | 静态计算器 + 对比模式 | ✅ 已上线 |
 | v1.1 | Decision Trace 数据格式预埋 | ✅ 已完成 |
-| v2.0 | Unified API + Provider Adapter | 📋 规划中 |
-| v2.1 | Capability Registry + 自动路由 | 📋 规划中 |
-| v3.0 | 数据驱动的 ML routing policy | 📋 远期 |
+| v1.2 | Execution Control Plane + Provider Adapter + Capability Registry | ✅ 已完成 |
+| v2.0 | ML-driven routing policy (基于 trace dataset 训练) | 📋 下一步 |
+| v2.1 | 用户反馈闭环 (user_feedback → policy 更新) | 📋 规划中 |
+| v3.0 | 多租户 SaaS + API Gateway | 📋 远期 |
