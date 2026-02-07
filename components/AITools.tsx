@@ -100,7 +100,13 @@ export const AITools: React.FC<AIToolsProps> = ({ onChatWithImage, onExtractText
   const handleExportTraces = () => {
     const traces = getTraceLog();
     if (traces.length === 0) {
-      alert('No execution traces yet. Use AI Tools to generate some first.');
+      setResultPanel({
+        title: 'Export Trace Dataset',
+        text: 'No execution traces yet. Use Chat, Extract, or Save features first to generate traces.',
+        trace_id: 'no_traces',
+      });
+      setIsOpen(false);
+      setShowImageTools(false);
       return;
     }
     const json = exportTraceDataset();
@@ -111,7 +117,13 @@ export const AITools: React.FC<AIToolsProps> = ({ onChatWithImage, onExtractText
     a.download = `ecocompute-traces-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    handleAction('export-traces');
+    setResultPanel({
+      title: 'Export Trace Dataset',
+      text: `Successfully exported ${traces.length} execution trace(s) as JSON dataset.`,
+      trace_id: `export_${Date.now()}`,
+    });
+    setIsOpen(false);
+    setShowImageTools(false);
   };
 
   const menuItems = [
