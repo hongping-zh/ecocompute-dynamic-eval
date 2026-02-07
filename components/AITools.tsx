@@ -81,6 +81,8 @@ export const AITools: React.FC<AIToolsProps> = ({ onChatWithImage, onExtractText
     } finally {
       setExecuting(false);
       setActiveAction(null);
+      setIsOpen(false);
+      setShowImageTools(false);
     }
   };
 
