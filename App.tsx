@@ -6,6 +6,7 @@ import { AudioMonitor } from './components/AudioMonitor';
 import { SettingsPanel, ApiConfig, loadApiConfig } from './components/SettingsPanel';
 import { Methodology } from './components/Methodology';
 import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
+import { AITools } from './components/AITools';
 import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -186,6 +187,9 @@ const App: React.FC = () => {
             {view === AppView.METHODOLOGY && <Methodology />}
         </div>
       </main>
+
+      {/* AI Tools FAB */}
+      <AITools />
 
       {/* Settings Panel */}
       <SettingsPanel 
