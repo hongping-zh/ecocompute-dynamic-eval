@@ -32,6 +32,7 @@ const FORMULA_FUNCTIONS: { name: string; syntax: string; desc: string; example: 
   { name: 'SQRT', syntax: 'SQRT(value)', desc: 'Square root', example: 'SQRT(gpu_count) * 100' },
   { name: 'LOG', syntax: 'LOG(value)', desc: 'Natural logarithm', example: 'LOG(tokens) * 10' },
   { name: 'POW', syntax: 'POW(base, exp)', desc: 'Power function', example: 'POW(gpu_count, 0.8) * 100' },
+  { name: 'HYBRID', syntax: 'API + Local (sample)', desc: 'Hybrid embedding + API cost', example: 'api_cost = tokens * 0.4 * input_price / 1000000; local_cost = gpu_count * hours * 0.6; api_cost + local_cost' },
 ];
 
 const validateFormula = (formula: string, vars: Record<string, number>): FormulaValidation => {
@@ -335,6 +336,32 @@ const PRESET_TEMPLATES = [
     config: { hardware: 't4', count: 1, hours: 8, pue: 1.2, region: 'global' },
     apiModel: 'gemini-1.5-flash',
     tokensPerDay: 50000
+  },
+  {
+    id: 'local-embedding-gpt4o-search',
+    name: '🧭 Local Embedding + GPT-4o (Search QA)',
+    description: 'Hybrid RAG pipeline with local embeddings; API tokens reduced ~60% vs full API flow',
+    config: { hardware: 'rtx5090', count: 1, hours: 12, pue: 1.2, region: 'global' },
+    apiModel: 'gpt-4o',
+    tokensPerDay: 800000,
+    featured: true,
+    gallery: true,
+    galleryCategory: 'RAG & Search',
+    galleryIcon: '🧠',
+    galleryColor: 'indigo'
+  },
+  {
+    id: 'qmd-claude-sonnet-rag',
+    name: '📚 QMD + Claude Sonnet (RAG)',
+    description: 'Local QMD embedding to cut API tokens ~60% with Claude Sonnet for retrieval-augmented answers',
+    config: { hardware: 'a100', count: 1, hours: 16, pue: 1.25, region: 'global' },
+    apiModel: 'claude-3.5-sonnet',
+    tokensPerDay: 600000,
+    featured: true,
+    gallery: true,
+    galleryCategory: 'RAG & Search',
+    galleryIcon: '📚',
+    galleryColor: 'purple'
   },
   // ========== Template Gallery - Industry Templates ==========
   {
@@ -1359,6 +1386,9 @@ export const Calculator: React.FC = () => {
                         </div>
                       </button>
                     ))}
+                  </div>
+                  <div className="text-[10px] text-slate-500 bg-white border border-slate-200 rounded px-2 py-1">
+                    Embedding cost tip: use a token reduction factor (e.g. 40%) to model local embeddings reducing API tokens by ~60%.
                   </div>
                 </div>
               )}
