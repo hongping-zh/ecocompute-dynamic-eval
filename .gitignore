@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Internal development memos (not for public repo)
+FINAL_MEMO_*.md
+MEMO_*.md
+PROJECT_FILES_CHECKLIST.md
