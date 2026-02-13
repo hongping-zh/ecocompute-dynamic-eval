@@ -1,6 +1,6 @@
 # ⚡ EcoCompute Dynamic Eval
 
-[![Paper](https://img.shields.io/badge/Paper-Draft-b31b1b.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval)
+[![Paper](https://img.shields.io/badge/Paper-Draft-b31b1b.svg)](TECHNICAL_DOCUMENTATION.md)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-brightgreen.svg)](https://hongping-zh.github.io/ecocompute-dynamic-eval/)
 [![Metadata](https://img.shields.io/badge/Metadata-Complete-blue.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)
 [![Reproducible](https://img.shields.io/badge/Reproducible-✓-success.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)
@@ -10,6 +10,27 @@
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by 17-33% due to mixed-precision decomposition. Disabling this pathway recovers **+79% throughput** and **−36% energy**, achieving **5.5% energy savings** vs FP16.
 
 Compare AI models by **Accuracy × Cost × Carbon** — RTX 5090 benchmarks reveal that 4-bit quantization wastes energy on small models.
+
+---
+
+## 🚀 Start Here (30 seconds)
+
+- 📊 **[Live Dashboard](https://hongping-zh.github.io/ecocompute-dynamic-eval/)**
+- 📄 **[Paper (Draft)](TECHNICAL_DOCUMENTATION.md)**
+- 📁 **[Metadata / Raw Data](metadata/)**
+
+**One-line takeaway**: Default bitsandbytes INT8 can be **energy-worse than FP16** because of **mixed-precision decomposition** (INT8↔FP16 conversion overhead), not because INT8 compute is inherently inefficient.
+
+**Key numbers**:
+- **Default INT8 vs FP16**: **+17–33% energy** (tested models)
+- **Ablation fix**: **+79% throughput** and **−36% energy** (average)
+- **Dataset**: **23 measurements**, **n=10** per config, **CV < 2%**, 2 GPU architectures
+
+### Quick Start (10 minutes)
+
+1. **View results**: open the [live dashboard](https://hongping-zh.github.io/ecocompute-dynamic-eval/)
+2. **Validate provenance**: inspect [`metadata/`](metadata/) for hardware/software/model commits and protocols
+3. **Reproduce figures locally**: use the commands in **Reproducibility Artifacts → Reproduction Commands** (below)
 
 ---
 
@@ -57,7 +78,7 @@ This benchmark follows rigorous reproducibility standards:
 - ✅ **High precision**: Coefficient of Variation < 2% (n=10 per configuration)
 - ✅ **Causal analysis**: Ablation experiments to isolate root causes
 - ✅ **Multi-model validation**: Consistent results across Yi-1.5-6B and Mistral-7B
-- ✅ **Open data**: All raw data, scripts, and provenance publicly available
+- ✅ **Open data**: All raw data, configurations, and provenance publicly available
 
 📁 **[View Complete Metadata →](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)**
 
@@ -88,16 +109,20 @@ Each metadata file contains:
 ### Reproduction Commands
 
 ```bash
-# RTX 5090 reproduction
-python energy_benchmark.py --gpu rtx5090 --models all --configs fp16,nf4
+# Install dependencies
+npm install
 
-# RTX 4090D standard reproduction
-python energy_benchmark.py --gpu rtx4090d --models all --configs fp16,nf4,int8
+# Run the dashboard locally (it reads from the dataset bundled in this repo)
+npm run dev
 
-# RTX 4090D pure INT8 reproduction
-python test_pure_int8.py --model 01-ai/Yi-1.5-6B-Chat
-python test_pure_int8_mistral.py --model mistralai/Mistral-7B-Instruct-v0.3
+# Build a static version (same as GitHub Pages build)
+npm run build
 ```
+
+**Expected outputs**:
+- A local dashboard identical in logic to the live site
+- Plots/metrics computed from the included dataset and metadata under `metadata/`
+- A production build under `dist/`
 
 ---
 
@@ -131,19 +156,6 @@ This research prevents a potential industry-wide mistake:
 
 ---
 
-## 🚀 Quick Start
-
-### View Dashboard
-Visit the [live dashboard](https://hongping-zh.github.io/ecocompute-dynamic-eval/) to explore interactive visualizations of all benchmark results.
-
-### Explore Metadata
-Browse the [`metadata/`](metadata/) directory for complete reproducibility artifacts.
-
-### Run Benchmarks
-Clone the repository and follow reproduction commands above.
-
----
-
 ## 📚 Citation
 
 If you use this data or methodology, please cite:
@@ -165,9 +177,8 @@ If you use this data or methodology, please cite:
 ## 🔗 Links
 
 - 📊 **[Live Dashboard](https://hongping-zh.github.io/ecocompute-dynamic-eval/)**: Interactive visualization
-- 📄 **[Paper (Draft)](https://github.com/hongping-zh/ecocompute-dynamic-eval)**: Full technical report
+- 📄 **[Paper (Draft)](TECHNICAL_DOCUMENTATION.md)**: Full technical report
 - 📁 **[Metadata](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)**: Complete reproducibility artifacts
-- 💻 **[Code](https://github.com/hongping-zh/ecocompute-ai)**: Benchmark scripts and raw data
 
 ---
 
