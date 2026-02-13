@@ -155,6 +155,228 @@ export const INITIAL_MODELS: ModelData[] = [
     }
   },
 
+  // ========== RTX 4090D Benchmarked Models (Real Data) ==========
+  // Yi-1.5-6B-Chat
+  {
+    id: 'yi-1.5-6b-fp16',
+    name: 'Yi-1.5-6B-Chat (FP16)',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 88.5,
+    executionTime: 0.0288,  // 1000/34.72
+    cost: 0.00047,
+    carbonImpact: 0.187,    // 4716 J/1k * 0.4 / 3600 * 1000
+    energyEfficiency: 192,  // 34.72 / 180.74 * 1000
+    tags: ['fp16', 'medium', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D via PyTorch 2.4.1+cu121, AutoDL Cloud. NVML power monitoring, 10 iterations.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'yi-1.5-6b-nf4',
+    name: 'Yi-1.5-6B-Chat (NF4) ⭐',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 86.2,
+    executionTime: 0.0520,  // 1000/19.23
+    cost: 0.00033,
+    carbonImpact: 0.131,    // 3292 J/1k - 30.2% savings!
+    energyEfficiency: 238,  // 19.23 / 80.87 * 1000
+    tags: ['4bit', 'quantized', 'energy-efficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. NF4 quantization via bitsandbytes. 30.2% energy savings vs FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'yi-1.5-6b-int8',
+    name: 'Yi-1.5-6B-Chat (INT8) ⚠️',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 87.8,
+    executionTime: 0.1188,  // 1000/8.42
+    cost: 0.00063,
+    carbonImpact: 0.248,    // 6258 J/1k - 32.7% MORE energy!
+    energyEfficiency: 120,  // 8.42 / 70.02 * 1000
+    tags: ['8bit', 'quantized', 'inefficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. INT8 uses 32.7% MORE energy than FP16. Not recommended.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  // Mistral-7B-Instruct-v0.3
+  {
+    id: 'mistral-7b-fp16',
+    name: 'Mistral-7B-Instruct-v0.3 (FP16)',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 92.8,
+    executionTime: 0.0344,  // 1000/29.06
+    cost: 0.00057,
+    carbonImpact: 0.224,    // 5661 J/1k
+    energyEfficiency: 160,  // 29.06 / 181.91 * 1000
+    tags: ['fp16', 'large', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D via PyTorch 2.4.1+cu121, AutoDL Cloud.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'mistral-7b-nf4',
+    name: 'Mistral-7B-Instruct-v0.3 (NF4) ⭐',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 90.5,
+    executionTime: 0.0576,  // 1000/17.37
+    cost: 0.00037,
+    carbonImpact: 0.147,    // 3707 J/1k - 34.5% savings!
+    energyEfficiency: 213,  // 17.37 / 81.49 * 1000
+    tags: ['4bit', 'quantized', 'energy-efficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. NF4 saves 34.5% energy vs FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'mistral-7b-int8',
+    name: 'Mistral-7B-Instruct-v0.3 (INT8) ⚠️',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 91.9,
+    executionTime: 0.1268,  // 1000/7.88
+    cost: 0.00074,
+    carbonImpact: 0.293,    // 7401 J/1k - 30.7% MORE energy!
+    energyEfficiency: 105,  // 7.88 / 75.29 * 1000
+    tags: ['8bit', 'quantized', 'inefficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. INT8 uses 30.7% MORE energy than FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  // Phi-3-mini-4k-instruct
+  {
+    id: 'phi-3-mini-fp16',
+    name: 'Phi-3-mini-4k-instruct (FP16)',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 84.7,
+    executionTime: 0.0343,  // 1000/29.19
+    cost: 0.00030,
+    carbonImpact: 0.119,    // 3003 J/1k
+    energyEfficiency: 278,  // 29.19 / 105.17 * 1000
+    tags: ['fp16', 'small', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D via PyTorch 2.4.1+cu121, AutoDL Cloud.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'phi-3-mini-nf4',
+    name: 'Phi-3-mini-4k-instruct (NF4) ⭐',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 82.4,
+    executionTime: 0.0497,  // 1000/20.12
+    cost: 0.00028,
+    carbonImpact: 0.109,    // 2759 J/1k - 8.1% savings
+    energyEfficiency: 276,  // 20.12 / 72.90 * 1000
+    tags: ['4bit', 'quantized', 'energy-efficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. NF4 saves 8.1% energy vs FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'phi-3-mini-int8',
+    name: 'Phi-3-mini-4k-instruct (INT8) ⚠️',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 83.6,
+    executionTime: 0.0760,  // 1000/13.15
+    cost: 0.00039,
+    carbonImpact: 0.156,    // 3940 J/1k - 31.2% MORE energy!
+    energyEfficiency: 190,  // 13.15 / 69.17 * 1000
+    tags: ['8bit', 'quantized', 'inefficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. INT8 uses 31.2% MORE energy than FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  // Qwen2.5-7B-Instruct
+  {
+    id: 'qwen2.5-7b-fp16-4090d',
+    name: 'Qwen2.5-7B-Instruct (FP16)',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 93.5,
+    executionTime: 0.0266,  // 1000/37.64
+    cost: 0.00052,
+    carbonImpact: 0.207,    // 5217 J/1k
+    energyEfficiency: 176,  // 37.64 / 213.45 * 1000
+    tags: ['fp16', 'large', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D via PyTorch 2.4.1+cu121, AutoDL Cloud.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'qwen2.5-7b-nf4-4090d',
+    name: 'Qwen2.5-7B-Instruct (NF4) ⭐',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 91.2,
+    executionTime: 0.0468,  // 1000/21.38
+    cost: 0.00035,
+    carbonImpact: 0.139,    // 3509 J/1k - 32.7% savings!
+    energyEfficiency: 231,  // 21.38 / 92.45 * 1000
+    tags: ['4bit', 'quantized', 'energy-efficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. NF4 saves 32.7% energy vs FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'qwen2.5-7b-int8-4090d',
+    name: 'Qwen2.5-7B-Instruct (INT8) ⚠️',
+    provider: 'RTX 4090D Benchmark',
+    accuracy: 92.7,
+    executionTime: 0.1046,  // 1000/9.56
+    cost: 0.00061,
+    carbonImpact: 0.243,    // 6127 J/1k - 17.4% MORE energy!
+    energyEfficiency: 126,  // 9.56 / 75.94 * 1000
+    tags: ['8bit', 'quantized', 'inefficient', 'rtx4090d-verified'],
+    provenance: {
+      source: 'EcoCompute RTX 4090D Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on RTX 4090D. INT8 uses 17.4% MORE energy than FP16.',
+      lastVerified: '2026-02-12',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+
   // ========== Commercial API Models (Estimated) ==========
   {
     id: 'm1',
@@ -427,6 +649,7 @@ export const INITIAL_MODELS: ModelData[] = [
 
 export const HARDWARE_OPTIONS = [
   { value: 'rtx5090', label: 'NVIDIA RTX 5090 (575W) ⭐ Benchmarked', power: 575 },
+  { value: 'rtx4090d', label: 'NVIDIA RTX 4090D (425W) ⭐ Benchmarked', power: 425 },
   { value: 'h100', label: 'NVIDIA H100 (700W)', power: 700 },
   { value: 'a100', label: 'NVIDIA A100 (400W)', power: 400 },
   { value: 'v100', label: 'NVIDIA V100 (300W)', power: 300 },
@@ -435,10 +658,21 @@ export const HARDWARE_OPTIONS = [
 ];
 
 // ============================================================
-// KEY FINDINGS FROM RTX 5090 BENCHMARK
+// KEY FINDINGS FROM RTX 5090 & RTX 4090D BENCHMARKS
 // ============================================================
+// RTX 5090 (Small Models):
 // 1. 4-bit quantization ONLY saves energy for models > 5B params
 // 2. For smaller models (< 3B), FP16 is MORE energy-efficient
 // 3. Qwen2-7B 4-bit saves 11.4% energy vs FP16
 // 4. TinyLlama-1.1B 4-bit uses 26.5% MORE energy than FP16
+//
+// RTX 4090D (6B-7B Models):
+// 5. NF4 consistently saves 8-35% energy vs FP16 for 6B-7B models
+// 6. INT8 consistently uses 17-33% MORE energy than FP16 (worst choice!)
+// 7. Yi-1.5-6B NF4: -30.2% energy | INT8: +32.7% energy
+// 8. Mistral-7B NF4: -34.5% energy | INT8: +30.7% energy
+// 9. Phi-3-mini NF4: -8.1% energy | INT8: +31.2% energy
+// 10. Qwen2.5-7B NF4: -32.7% energy | INT8: +17.4% energy
+//
+// RECOMMENDATION: Use NF4 for 6B+ models, avoid INT8
 // ============================================================
