@@ -1,0 +1,258 @@
+{
+  "benchmark_id": "rtx5090_phase1_20260115",
+  "benchmark_name": "EcoCompute RTX 5090 Energy Efficiency Benchmark",
+  "version": "1.0",
+  "date": "2026-01-15",
+  "status": "completed",
+  
+  "platform": {
+    "provider": "AutoDL",
+    "provider_url": "https://www.autodl.com",
+    "region": "China (specific region not disclosed)",
+    "instance_type": "RTX 5090 × 1",
+    "pricing": "~¥3-5/hour (estimated)",
+    "total_cost_cny": "~30-40 CNY",
+    "total_cost_usd": "~4-6 USD"
+  },
+  
+  "hardware": {
+    "gpu": {
+      "model": "NVIDIA GeForce RTX 5090",
+      "architecture": "Blackwell",
+      "vram": "32GB GDDR7",
+      "memory_bandwidth": "~1.8 TB/s",
+      "tdp": "575W",
+      "cuda_cores": "21760",
+      "tensor_cores": "680 (5th gen)",
+      "driver_version": "560.x+"
+    },
+    "cpu": {
+      "model": "High-performance server CPU",
+      "cores": "16+",
+      "details": "Specific model not recorded"
+    },
+    "memory": {
+      "ram": "64GB+",
+      "type": "DDR5"
+    },
+    "storage": {
+      "system_disk": "NVMe SSD",
+      "cache_location": "/root/.cache/huggingface"
+    }
+  },
+  
+  "software": {
+    "os": {
+      "distribution": "Ubuntu",
+      "version": "20.04 LTS",
+      "kernel": "5.x"
+    },
+    "python": {
+      "version": "3.10.x",
+      "distribution": "System Python or Conda"
+    },
+    "deep_learning_framework": {
+      "pytorch": "2.10.0+cu128",
+      "cuda": "12.8",
+      "cudnn": "8.x",
+      "cuda_capability": "9.0"
+    },
+    "libraries": {
+      "transformers": "4.47.0",
+      "bitsandbytes": "0.45.0",
+      "accelerate": "0.x",
+      "pynvml": "11.x",
+      "numpy": "1.x",
+      "pandas": "2.x",
+      "huggingface_hub": "latest"
+    },
+    "model_source": {
+      "primary": "HuggingFace Hub",
+      "mirror": "huggingface.co (direct access)",
+      "reason": "Direct access available from platform"
+    }
+  },
+  
+  "models": [
+    {
+      "name": "TinyLlama-1.1B-Chat-v1.0",
+      "organization": "TinyLlama",
+      "repository": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "model_type": "decoder-only transformer",
+      "parameters": "1.1B",
+      "architecture": "LLaMA-style",
+      "source": "huggingface.co",
+      "download_date": "2026-01-15",
+      "size_gb": 2.2,
+      "tokenizer": "sentencepiece",
+      "context_length": 2048
+    },
+    {
+      "name": "Qwen2-1.5B",
+      "organization": "Qwen",
+      "repository": "Qwen/Qwen2-1.5B",
+      "model_type": "decoder-only transformer",
+      "parameters": "1.5B",
+      "architecture": "Qwen2",
+      "source": "huggingface.co",
+      "download_date": "2026-01-15",
+      "size_gb": 3.0,
+      "tokenizer": "tiktoken",
+      "context_length": 32768
+    },
+    {
+      "name": "Qwen2.5-3B-Instruct",
+      "organization": "Qwen",
+      "repository": "Qwen/Qwen2.5-3B-Instruct",
+      "model_type": "decoder-only transformer",
+      "parameters": "3B",
+      "architecture": "Qwen2.5",
+      "source": "huggingface.co",
+      "download_date": "2026-01-15",
+      "size_gb": 6.0,
+      "tokenizer": "tiktoken",
+      "context_length": 32768
+    },
+    {
+      "name": "Qwen2-7B",
+      "organization": "Qwen",
+      "repository": "Qwen/Qwen2-7B",
+      "model_type": "decoder-only transformer",
+      "parameters": "7B",
+      "architecture": "Qwen2",
+      "source": "huggingface.co",
+      "download_date": "2026-01-15",
+      "size_gb": 14.0,
+      "tokenizer": "tiktoken",
+      "context_length": 32768
+    }
+  ],
+  
+  "quantization_configs": [
+    {
+      "name": "FP16",
+      "description": "Native half-precision (16-bit floating point)",
+      "method": "torch.float16",
+      "library": "PyTorch native",
+      "memory_per_param": "2 bytes"
+    },
+    {
+      "name": "NF4",
+      "description": "4-bit NormalFloat quantization",
+      "method": "bitsandbytes NF4",
+      "library": "bitsandbytes 0.45.0",
+      "parameters": {
+        "load_in_4bit": true,
+        "bnb_4bit_quant_type": "nf4",
+        "bnb_4bit_compute_dtype": "torch.float16",
+        "bnb_4bit_use_double_quant": true
+      },
+      "memory_per_param": "0.5 bytes (4-bit)",
+      "dequantization": "on-the-fly during inference"
+    }
+  ],
+  
+  "measurement_protocol": {
+    "power_monitoring": {
+      "method": "NVML (NVIDIA Management Library)",
+      "sampling_rate_hz": 10,
+      "sampling_interval_ms": 100,
+      "baseline_subtraction": true,
+      "idle_power_measurement_duration_s": 10,
+      "idle_power_measured": "45.2W"
+    },
+    "inference_protocol": {
+      "thermal_stabilization_minutes": 5,
+      "warmup_iterations": "short generation warmup per run",
+      "measurement_iterations": 10,
+      "prompt": "Standard prompt for text generation",
+      "max_new_tokens": 256,
+      "generation_config": {
+        "do_sample": false,
+        "temperature": null,
+        "top_p": null,
+        "top_k": null
+      }
+    },
+    "cooldown": {
+      "between_configs_seconds": 60,
+      "between_models_seconds": 60
+    }
+  },
+  
+  "execution_timeline": {
+    "start_time": "2026-01-15T00:00:00+08:00",
+    "end_time": "2026-01-15T08:00:00+08:00",
+    "total_duration_hours": 8,
+    "breakdown": {
+      "environment_setup_hours": 0.5,
+      "model_downloads_hours": 1.0,
+      "benchmark_execution_hours": 6.0,
+      "data_validation_hours": 0.5
+    }
+  },
+  
+  "output_files": {
+    "primary_results": "rtx5090_benchmark_results.csv",
+    "benchmark_report": "RTX5090_Energy_Benchmark_Report_EN.md",
+    "metadata": "rtx5090_metadata.json"
+  },
+  
+  "data_quality": {
+    "total_measurements": 8,
+    "successful_measurements": 8,
+    "failed_measurements": 0,
+    "repetitions_per_config": 10,
+    "total_inference_runs": 80,
+    "coefficient_of_variation": {
+      "throughput_mean": "0.5-1.2%",
+      "power_mean": "1.3-1.8%"
+    }
+  },
+  
+  "key_findings": {
+    "nf4_paradox": {
+      "description": "NF4 quantization increases energy for models <5B parameters",
+      "tinyllama_1.1b": "+26.5% energy vs FP16",
+      "qwen2_1.5b": "+29.4% energy vs FP16",
+      "qwen2.5_3b": "+11.7% energy vs FP16",
+      "qwen2_7b": "-11.4% energy vs FP16 (crossover)"
+    },
+    "crossover_point": "~5B parameters",
+    "hypothesis": "De-quantization overhead dominates for small models on high-throughput GPUs"
+  },
+  
+  "known_issues": {
+    "none_reported": "No significant issues encountered during RTX 5090 benchmark"
+  },
+  
+  "reproducibility": {
+    "script_location": "https://github.com/hongping-zh/ecocompute-ai",
+    "script_filename": "energy_benchmark.py",
+    "execution_command": "python energy_benchmark.py --model <model> --config <config>",
+    "environment_variables": {
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  
+  "citation": {
+    "paper_title": "Energy Efficiency of Quantized Large Language Model Inference on NVIDIA RTX 5090 (Blackwell): Evidence for a Quantization Efficiency Paradox",
+    "author": "Hongping Zhang",
+    "year": 2026,
+    "url": "https://hongping-zh.github.io/ecocompute-dynamic-eval/",
+    "repository": "https://github.com/hongping-zh/ecocompute-ai",
+    "benchmark_report": "https://github.com/hongping-zh/ecocompute-ai/blob/main/RTX5090_Energy_Benchmark_Report_EN.md"
+  },
+  
+  "contact": {
+    "author": "Hongping Zhang",
+    "email": "zhanghongping1982@gmail.com",
+    "github": "https://github.com/hongping-zh"
+  },
+  
+  "notes": {
+    "architecture_significance": "RTX 5090 Blackwell is the first consumer GPU with 5th generation Tensor Cores and GDDR7 memory",
+    "measurement_quality": "High-quality measurements with low variance, indicating stable experimental conditions",
+    "future_work": "INT8 quantization not tested on RTX 5090; validated on RTX 4090D instead"
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "benchmark_id": "rtx4090d_phase2_20260212",
+  "benchmark_name": "EcoCompute RTX 4090D Energy Efficiency Benchmark",
+  "version": "1.0",
+  "date": "2026-02-12",
+  "status": "completed",
+  
+  "platform": {
+    "provider": "AutoDL",
+    "provider_url": "https://www.autodl.com",
+    "region": "Beijing, China (北京区)",
+    "instance_id": "autodl-container-sf7vhxbd81-a7b50243",
+    "instance_type": "RTX 4090D × 1",
+    "pricing": "¥1.98/hour",
+    "total_cost_cny": "~12 CNY",
+    "total_cost_usd": "~1.70 USD"
+  },
+  
+  "hardware": {
+    "gpu": {
+      "model": "NVIDIA GeForce RTX 4090D",
+      "architecture": "Ada Lovelace",
+      "vram": "24GB GDDR6X",
+      "memory_bandwidth": "~1.0 TB/s",
+      "tdp": "425W",
+      "cuda_cores": "16384",
+      "tensor_cores": "512 (4th gen)",
+      "driver_version": "535.x"
+    },
+    "cpu": {
+      "model": "Intel Xeon(R) Platinum 8352V",
+      "cores": 16,
+      "threads": 32,
+      "base_frequency": "2.1 GHz"
+    },
+    "memory": {
+      "ram": "60GB",
+      "type": "DDR4"
+    },
+    "storage": {
+      "system_disk": "50GB SSD",
+      "data_disk": "50GB (expandable to 7782GB)",
+      "cache_location": "/root/autodl-tmp/huggingface_cache"
+    }
+  },
+  
+  "software": {
+    "os": {
+      "distribution": "Ubuntu",
+      "version": "20.04.5 LTS",
+      "kernel": "5.x"
+    },
+    "python": {
+      "version": "3.8.x",
+      "distribution": "Miniconda",
+      "environment": "base"
+    },
+    "deep_learning_framework": {
+      "pytorch": "2.4.1+cu121",
+      "cuda": "12.1",
+      "cudnn": "8.x",
+      "cuda_capability": "8.9"
+    },
+    "libraries": {
+      "transformers": "4.x (latest compatible with PyTorch 2.4.1)",
+      "bitsandbytes": "latest (CUDA 12.1 compatible)",
+      "accelerate": "latest",
+      "pynvml": "11.x",
+      "numpy": "1.24.x",
+      "pandas": "2.x",
+      "huggingface_hub": "latest",
+      "sentencepiece": "latest",
+      "protobuf": "3.20.0"
+    },
+    "model_source": {
+      "primary": "HuggingFace Hub",
+      "mirror": "hf-mirror.com (China domestic mirror)",
+      "reason": "Faster download speed in China region"
+    }
+  },
+  
+  "models": [
+    {
+      "name": "Yi-1.5-6B-Chat",
+      "organization": "01-ai",
+      "repository": "01-ai/Yi-1.5-6B-Chat",
+      "model_type": "decoder-only transformer",
+      "parameters": "6B",
+      "architecture": "LLaMA-style",
+      "source": "hf-mirror.com",
+      "download_date": "2026-02-12",
+      "size_gb": 12,
+      "tokenizer": "sentencepiece",
+      "context_length": 4096
+    },
+    {
+      "name": "Mistral-7B-Instruct-v0.3",
+      "organization": "mistralai",
+      "repository": "mistralai/Mistral-7B-Instruct-v0.3",
+      "model_type": "decoder-only transformer",
+      "parameters": "7B",
+      "architecture": "Mistral",
+      "source": "hf-mirror.com",
+      "download_date": "2026-02-12",
+      "size_gb": 14,
+      "tokenizer": "sentencepiece",
+      "context_length": 32768
+    },
+    {
+      "name": "Phi-3-mini-4k-instruct",
+      "organization": "microsoft",
+      "repository": "microsoft/Phi-3-mini-4k-instruct",
+      "model_type": "decoder-only transformer",
+      "parameters": "3.8B",
+      "architecture": "Phi-3",
+      "source": "hf-mirror.com",
+      "download_date": "2026-02-12",
+      "size_gb": 7.6,
+      "tokenizer": "tiktoken",
+      "context_length": 4096
+    },
+    {
+      "name": "Qwen2.5-7B-Instruct",
+      "organization": "Qwen",
+      "repository": "Qwen/Qwen2.5-7B-Instruct",
+      "model_type": "decoder-only transformer",
+      "parameters": "7B",
+      "architecture": "Qwen2.5",
+      "source": "hf-mirror.com",
+      "download_date": "2026-02-12",
+      "size_gb": 14,
+      "tokenizer": "tiktoken",
+      "context_length": 32768
+    }
+  ],
+  
+  "quantization_configs": [
+    {
+      "name": "FP16",
+      "description": "Native half-precision (16-bit floating point)",
+      "method": "torch.float16",
+      "library": "PyTorch native",
+      "memory_per_param": "2 bytes"
+    },
+    {
+      "name": "NF4",
+      "description": "4-bit NormalFloat quantization",
+      "method": "bitsandbytes NF4",
+      "library": "bitsandbytes",
+      "parameters": {
+        "load_in_4bit": true,
+        "bnb_4bit_quant_type": "nf4",
+        "bnb_4bit_compute_dtype": "torch.float16",
+        "bnb_4bit_use_double_quant": true
+      },
+      "memory_per_param": "0.5 bytes (4-bit)",
+      "dequantization": "on-the-fly during inference"
+    },
+    {
+      "name": "INT8",
+      "description": "8-bit integer quantization",
+      "method": "bitsandbytes INT8",
+      "library": "bitsandbytes",
+      "parameters": {
+        "load_in_8bit": true
+      },
+      "memory_per_param": "1 byte",
+      "dequantization": "on-the-fly during inference"
+    }
+  ],
+  
+  "measurement_protocol": {
+    "power_monitoring": {
+      "method": "NVML (NVIDIA Management Library)",
+      "sampling_rate_hz": 10,
+      "sampling_interval_ms": 100,
+      "baseline_subtraction": true,
+      "idle_power_measurement_duration_s": 10
+    },
+    "inference_protocol": {
+      "thermal_stabilization_seconds": 30,
+      "warmup_iterations": 3,
+      "measurement_iterations": 10,
+      "prompt": "Explain the concept of energy efficiency in computing:",
+      "max_new_tokens": 256,
+      "generation_config": {
+        "do_sample": false,
+        "temperature": null,
+        "top_p": null,
+        "top_k": null
+      }
+    },
+    "cooldown": {
+      "between_configs_seconds": 60,
+      "between_models_seconds": 60
+    }
+  },
+  
+  "execution_timeline": {
+    "start_time": "2026-02-12T08:00:00+08:00",
+    "end_time": "2026-02-12T14:00:00+08:00",
+    "total_duration_hours": 6,
+    "breakdown": {
+      "environment_setup_hours": 0.5,
+      "model_downloads_hours": 1.5,
+      "benchmark_execution_hours": 3.5,
+      "data_validation_hours": 0.5
+    }
+  },
+  
+  "output_files": {
+    "primary_results": "rtx4090d_clean.csv",
+    "raw_results": "rtx4090d_benchmark_results.csv",
+    "benchmark_log": "benchmark.log",
+    "metadata": "rtx4090d_metadata.json"
+  },
+  
+  "data_quality": {
+    "total_measurements": 12,
+    "successful_measurements": 12,
+    "failed_measurements": 0,
+    "repetitions_per_config": 10,
+    "total_inference_runs": 120,
+    "coefficient_of_variation": {
+      "throughput_mean": "0.3-1.7%",
+      "power_mean": "0.9-3.0%"
+    }
+  },
+  
+  "known_issues": {
+    "disk_space": "System disk reached 100% during initial run, resolved by moving cache to data disk",
+    "network": "HuggingFace.co unreachable from China, used hf-mirror.com instead",
+    "dependencies": "Initial protobuf version conflict, resolved by downgrading to 3.20.0"
+  },
+  
+  "reproducibility": {
+    "script_location": "https://github.com/hongping-zh/ecocompute-ai",
+    "script_filename": "energy_benchmark.py",
+    "execution_command": "nohup ./run_benchmark.sh > benchmark.log 2>&1 &",
+    "environment_variables": {
+      "HF_HOME": "/root/autodl-tmp/huggingface_cache",
+      "TRANSFORMERS_CACHE": "/root/autodl-tmp/huggingface_cache",
+      "HF_ENDPOINT": "https://hf-mirror.com"
+    }
+  },
+  
+  "citation": {
+    "paper_title": "Energy Efficiency of Quantized Large Language Model Inference: Evidence for Quantization Efficiency Paradoxes on NVIDIA Blackwell and Ada Lovelace Architectures",
+    "author": "Hongping Zhang",
+    "year": 2026,
+    "url": "https://hongping-zh.github.io/ecocompute-dynamic-eval/",
+    "repository": "https://github.com/hongping-zh/ecocompute-ai"
+  },
+  
+  "contact": {
+    "author": "Hongping Zhang",
+    "email": "zhanghongping1982@gmail.com",
+    "github": "https://github.com/hongping-zh"
+  }
+}
