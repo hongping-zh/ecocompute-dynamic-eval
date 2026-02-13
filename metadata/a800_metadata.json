@@ -1,0 +1,297 @@
+{
+  "experiment_id": "a800_batch_size_20260213",
+  "experiment_name": "A800 Batch Size Validation - INT8 Paradox and Scalability Analysis",
+  "version": "1.0",
+  "date": "2026-02-13",
+  "status": "completed",
+  "purpose": "Validate INT8 paradox on data center GPU and measure batch size impact on energy efficiency",
+  
+  "platform": {
+    "provider": "AutoDL",
+    "region": "Beijing, China",
+    "instance_id": "autodl-container-86a34883c1-a9571673",
+    "pricing": "¥3.50/hour (estimated)"
+  },
+
+  "hardware": {
+    "gpu": {
+      "model": "NVIDIA A800",
+      "full_name": "NVIDIA A800 80GB PCIe",
+      "architecture": "Ampere",
+      "architecture_code": "GA100",
+      "vram": "40GB HBM2e",
+      "memory_bandwidth": "1,555 GB/s",
+      "cuda_cores": 6912,
+      "tensor_cores": "3rd generation",
+      "tdp": "250W",
+      "compute_capability": "8.0"
+    },
+    "cpu": {
+      "model": "Intel Xeon (exact model not recorded)",
+      "cores": "16+",
+      "threads": "32+"
+    },
+    "ram": {
+      "capacity": "60GB+",
+      "type": "DDR4"
+    }
+  },
+
+  "software": {
+    "os": {
+      "distribution": "Ubuntu",
+      "version": "20.04 LTS",
+      "kernel": "Linux"
+    },
+    "python": {
+      "version": "3.10.x",
+      "environment": "base (conda)"
+    },
+    "pytorch": {
+      "version": "2.x (exact version not recorded)",
+      "cuda_version": "12.x",
+      "installation_method": "pip"
+    },
+    "transformers": {
+      "version": "4.x (latest)",
+      "source": "huggingface"
+    },
+    "bitsandbytes": {
+      "version": "0.x (latest)",
+      "purpose": "INT8 quantization with configurable mixed-precision decomposition"
+    },
+    "nvml": {
+      "library": "pynvml",
+      "version": "11.5.x",
+      "purpose": "GPU power monitoring"
+    }
+  },
+
+  "environment_variables": {
+    "HF_HOME": "/root/autodl-tmp/huggingface_cache",
+    "HF_ENDPOINT": "https://hf-mirror.com",
+    "CUDA_VISIBLE_DEVICES": "0"
+  },
+
+  "model_tested": {
+    "model_id": "mistral_7b",
+    "name": "Mistral-7B-Instruct-v0.3",
+    "huggingface_path": "mistralai/Mistral-7B-Instruct-v0.3",
+    "commit_hash": "latest (2026-02-13)",
+    "parameters": "7.0B",
+    "architecture": "Mistral",
+    "context_length": "8192 tokens"
+  },
+
+  "quantization_configurations": [
+    {
+      "config_id": "fp16",
+      "name": "FP16 (Half Precision)",
+      "code": "torch_dtype=torch.float16",
+      "behavior": "Native half-precision inference (baseline)"
+    },
+    {
+      "config_id": "int8_default",
+      "name": "INT8 Default (Mixed-Precision Decomposition)",
+      "library": "bitsandbytes",
+      "code": "BitsAndBytesConfig(load_in_8bit=True)",
+      "parameters": {
+        "load_in_8bit": true,
+        "llm_int8_threshold": 6.0,
+        "llm_int8_skip_modules": null
+      },
+      "behavior": "Outlier features (magnitude > 6.0) computed in FP16; remaining in INT8. Requires continuous INT8↔FP16 type conversion."
+    },
+    {
+      "config_id": "int8_pure",
+      "name": "INT8 Pure (No Mixed-Precision Decomposition)",
+      "library": "bitsandbytes",
+      "code": "BitsAndBytesConfig(load_in_8bit=True, llm_int8_threshold=0.0)",
+      "parameters": {
+        "load_in_8bit": true,
+        "llm_int8_threshold": 0.0,
+        "llm_int8_skip_modules": null
+      },
+      "behavior": "All features computed in INT8 with no FP16 fallback. Eliminates type conversion overhead."
+    }
+  ],
+
+  "batch_sizes_tested": [1, 4, 8],
+
+  "measurement_protocol": {
+    "power_monitoring": {
+      "tool": "NVIDIA Management Library (NVML)",
+      "sampling_rate": "Variable during generation",
+      "metric": "Instantaneous power draw (watts)"
+    },
+    "generation_settings": {
+      "prompt": "Explain the concept of energy efficiency in computing:",
+      "max_new_tokens": 128,
+      "temperature": 0,
+      "do_sample": false,
+      "padding": true
+    },
+    "benchmark_procedure": [
+      "Load model and tokenizer",
+      "Warmup: 1 iteration (20 tokens)",
+      "Measurement: 5 iterations per batch size (128 tokens each)",
+      "Power sampling: During generation (5 samples per iteration)",
+      "Metrics calculation: Throughput, power, energy per 1k tokens"
+    ],
+    "energy_calculation": "Energy (J/1k tokens) = (Average Power) × (1000 / Throughput)"
+  },
+
+  "results": {
+    "batch_size_1": {
+      "fp16": {
+        "throughput_mean": 36.18,
+        "power_mean": 156.81,
+        "energy_per_1k": 4334
+      },
+      "int8_default": {
+        "throughput_mean": 9.87,
+        "power_mean": 94.78,
+        "energy_per_1k": 9608,
+        "vs_fp16_percent": 121.7
+      },
+      "int8_pure": {
+        "throughput_mean": 18.09,
+        "power_mean": 104.55,
+        "energy_per_1k": 5781,
+        "vs_fp16_percent": 33.4,
+        "vs_int8_default_throughput_improvement_percent": 83.3,
+        "vs_int8_default_energy_improvement_percent": -39.8
+      }
+    },
+    "batch_size_4": {
+      "fp16": {
+        "throughput_mean": 145.35,
+        "power_mean": 159.95,
+        "energy_per_1k": 1100
+      },
+      "int8_default": {
+        "throughput_mean": 35.91,
+        "power_mean": 97.60,
+        "energy_per_1k": 2718,
+        "vs_fp16_percent": 147.1
+      },
+      "int8_pure": {
+        "throughput_mean": 72.96,
+        "power_mean": 115.26,
+        "energy_per_1k": 1580,
+        "vs_fp16_percent": 43.6,
+        "vs_int8_default_throughput_improvement_percent": 103.2,
+        "vs_int8_default_energy_improvement_percent": -41.9
+      }
+    },
+    "batch_size_8": {
+      "fp16": {
+        "throughput_mean": 290.59,
+        "power_mean": 182.45,
+        "energy_per_1k": 628
+      },
+      "int8_default": {
+        "throughput_mean": 69.88,
+        "power_mean": 99.00,
+        "energy_per_1k": 1417,
+        "vs_fp16_percent": 125.6
+      },
+      "int8_pure": {
+        "throughput_mean": 144.32,
+        "power_mean": 119.32,
+        "energy_per_1k": 827,
+        "vs_fp16_percent": 31.7,
+        "vs_int8_default_throughput_improvement_percent": 106.5,
+        "vs_int8_default_energy_improvement_percent": -41.6
+      }
+    },
+    "summary": {
+      "average_pure_int8_throughput_improvement_percent": 97.7,
+      "average_pure_int8_energy_improvement_percent": -41.1,
+      "batch_size_energy_reduction_bs8_vs_bs1": {
+        "fp16": -85.5,
+        "int8_default": -85.3,
+        "int8_pure": -85.7
+      }
+    }
+  },
+
+  "data_quality": {
+    "sample_size": "n=5 per configuration",
+    "total_configurations": 9,
+    "total_iterations": 45,
+    "measurement_duration": "~40 minutes",
+    "note": "Quick validation experiment with reduced iterations (5 vs 10) for faster turnaround"
+  },
+
+  "key_findings": {
+    "finding_1": "INT8 paradox confirmed on data center GPU (A800 Ampere)",
+    "finding_2": "Default INT8 shows 122-147% energy penalty across all batch sizes",
+    "finding_3": "Pure INT8 recovers +97.7% throughput and -41.1% energy on average",
+    "finding_4": "Batch size has massive impact: BS=8 uses ~85% less energy than BS=1",
+    "finding_5": "Pure INT8 improvement increases with batch size (83% → 107%)",
+    "finding_6": "A800 pure INT8 still slower than FP16 at BS=1 (+33% energy), unlike RTX 4090D (-8%)",
+    "conclusion": "INT8 paradox is universal across consumer and data center GPUs. Batch size is critical for energy efficiency."
+  },
+
+  "cross_gpu_comparison": {
+    "note": "Comparing A800 vs RTX 4090D for Mistral-7B at batch_size=1",
+    "a800_ampere": {
+      "fp16_energy": 4334,
+      "int8_pure_energy": 5781,
+      "pure_vs_fp16": "+33.4%"
+    },
+    "rtx4090d_ada_lovelace": {
+      "fp16_energy": 5661,
+      "int8_pure_energy": 5212,
+      "pure_vs_fp16": "-7.9%"
+    },
+    "observation": "RTX 4090D (Ada Lovelace, 4th gen Tensor Cores) shows better pure INT8 efficiency than A800 (Ampere, 3rd gen Tensor Cores). Possible reason: Ada Lovelace has more optimized INT8 Tensor Cores."
+  },
+
+  "implications": {
+    "for_practitioners": [
+      "Always use larger batch sizes when possible (BS=8 uses 85% less energy than BS=1)",
+      "Avoid default bitsandbytes INT8 on A800 (122-147% energy penalty)",
+      "Use pure INT8 (threshold=0.0) for better performance, but validate accuracy",
+      "Consider GPU architecture: Ada Lovelace shows better pure INT8 efficiency than Ampere"
+    ],
+    "for_researchers": [
+      "Batch size is a critical variable in energy benchmarks (5-10x impact)",
+      "INT8 paradox affects both consumer and data center GPUs",
+      "Architecture-dependent behavior: Pure INT8 energy savings vary by GPU generation",
+      "Mixed-precision decomposition overhead is consistent (~40% energy penalty) across batch sizes"
+    ]
+  },
+
+  "limitations": {
+    "model_coverage": "Tested on single model (Mistral-7B). Additional models recommended.",
+    "batch_sizes": "Tested BS=1/4/8. Larger batch sizes (16, 32, 64) not tested.",
+    "iterations": "Only 5 iterations per config (vs 10 in previous experiments) for quick validation",
+    "accuracy_impact": "Accuracy degradation of pure INT8 not measured",
+    "software_versions": "Exact software versions not recorded (installed latest versions)"
+  },
+
+  "future_work": [
+    "Test additional models (Yi-1.5-6B, Qwen2.5-7B) on A800",
+    "Extend to larger batch sizes (BS=16, 32, 64)",
+    "Measure accuracy impact of pure INT8 on A800",
+    "Test on H100 (Hopper, 4th gen Tensor Cores) for comparison",
+    "Kernel-level profiling to understand A800 vs RTX 4090D INT8 performance difference"
+  ],
+
+  "data_files": {
+    "results": "/root/a800_batch_size_results.txt",
+    "script": "/root/test_batch_size_a800.py",
+    "analysis": "A800_BATCH_SIZE_ANALYSIS.md"
+  },
+
+  "contact": {
+    "author": "Hongping Zhang",
+    "email": "zhanghongping1982@gmail.com",
+    "github": "https://github.com/hongping-zh"
+  },
+
+  "license": "MIT",
+  "citation": "If you use this data, please cite: Zhang, H. (2026). Energy Efficiency of Quantized LLM Inference: A800 Batch Size Validation."
+}
