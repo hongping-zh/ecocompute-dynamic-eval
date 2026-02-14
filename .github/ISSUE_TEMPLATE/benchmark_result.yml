@@ -1,0 +1,140 @@
+name: 📊 Share Benchmark Results
+description: Share your energy efficiency measurements on different hardware
+labels: ["community-data", "enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🎉 Thanks for contributing data! Your measurements help expand our coverage and validate findings across different hardware.
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU Model
+      description: Which GPU did you test on?
+      placeholder: "e.g., RTX 4090, H100, A100, AMD MI300"
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: LLM Model
+      description: Which language model did you benchmark?
+      placeholder: "e.g., Mistral-7B-Instruct-v0.3, LLaMA-3-8B, Qwen2.5-7B"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: batch_size
+    attributes:
+      label: Batch Size
+      description: What batch size did you use?
+      options:
+        - "1"
+        - "2"
+        - "4"
+        - "8"
+        - "16"
+        - "32"
+        - "Other (specify in additional info)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: results
+    attributes:
+      label: Energy Measurements
+      description: Please provide energy consumption (J/1k tokens) for each configuration
+      placeholder: |
+        FP16: 5,500 J/1k tokens (throughput: 29.06 tok/s, power: 164.5W)
+        NF4: 3,800 J/1k tokens (throughput: 16.98 tok/s, power: 153.4W)
+        INT8 (default): 7,200 J/1k tokens (throughput: 7.88 tok/s, power: 58.3W)
+        INT8 (pure, threshold=0.0): 5,100 J/1k tokens (throughput: 14.15 tok/s, power: 62.1W)
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: metadata
+    attributes:
+      label: Software Environment
+      description: Please provide software versions and configuration
+      placeholder: |
+        - PyTorch: 2.4.1
+        - CUDA: 12.1
+        - transformers: 4.46.3
+        - bitsandbytes: 0.45.0
+        - Python: 3.10.12
+        - OS: Ubuntu 22.04
+        - Sample size (n): 10
+        - Generation length: 128 tokens
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware_specs
+    attributes:
+      label: Hardware Specifications
+      description: Detailed GPU and system specs
+      placeholder: |
+        - GPU: RTX 4090
+        - VRAM: 24GB GDDR6X
+        - Architecture: Ada Lovelace
+        - CUDA Cores: 16384
+        - Tensor Cores: 512 (4th gen)
+        - TDP: 450W
+        - CPU: AMD Ryzen 9 7950X
+        - RAM: 64GB DDR5
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_quality
+    attributes:
+      label: Data Quality Metrics
+      description: Statistical information about your measurements
+      placeholder: |
+        - Coefficient of Variation (CV): 1.2% (throughput), 2.1% (power)
+        - Sample size (n): 10
+        - Total measurement time: ~2 hours
+        - Idle power baseline: 25W
+      render: markdown
+    validations:
+      required: false
+
+  - type: textarea
+    id: observations
+    attributes:
+      label: Observations & Notes
+      description: Any interesting findings or issues you encountered
+      placeholder: |
+        - INT8 default showed similar energy penalty as reported
+        - Pure INT8 recovered most throughput
+        - Noticed temperature stabilized after 5 minutes
+      render: markdown
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: sharing
+    attributes:
+      label: Data Sharing
+      description: Are you willing to share raw data files?
+      options:
+        - label: I can provide raw measurement data (JSON/CSV)
+        - label: I can provide power trace logs
+        - label: I'm willing to be listed as a community contributor
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact (Optional)
+      description: Email or GitHub username if you'd like to be credited
+      placeholder: "your.email@example.com or @github_username"
+    validations:
+      required: false

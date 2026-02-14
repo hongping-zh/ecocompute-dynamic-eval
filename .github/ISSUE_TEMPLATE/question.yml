@@ -1,0 +1,61 @@
+name: 🙋 Question
+description: Ask a question about the research, methodology, or code
+labels: ["question"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        👋 Thanks for your question! I'll try to respond within 24-48 hours.
+        
+        **Tip**: Check [Discussions](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions) for longer conversations or community Q&A.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Methodology & Experimental Design
+        - Results & Data Interpretation
+        - Code & Implementation
+        - Hardware & Setup
+        - Reproducibility
+        - Paper & Citations
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Please be as specific as possible
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context (Optional)
+      description: Any additional context that might help answer your question
+      placeholder: |
+        - What you've already tried
+        - Relevant sections from the paper
+        - Related issues or discussions
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References (Optional)
+      description: Links to papers, code, or documentation you're referring to
+      placeholder: |
+        - Paper section 4.3
+        - https://github.com/...
+        - Related paper: https://arxiv.org/...
+    validations:
+      required: false

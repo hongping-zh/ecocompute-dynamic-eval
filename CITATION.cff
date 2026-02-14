@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use this dataset or findings, please cite it as below."
+title: "Energy Efficiency of Quantized Large Language Model Inference: Evidence for Quantization Efficiency Paradoxes on NVIDIA Blackwell, Ada Lovelace, and Ampere Architectures"
+version: 1.0.0
+date-released: 2026-02-14
+authors:
+  - family-names: Zhang
+    given-names: Hongping
+    email: zhanghongping1982@gmail.com
+    affiliation: Independent Researcher
+    city: Changsha
+    region: Hunan
+    country: CN
+url: "https://github.com/hongping-zh/ecocompute-dynamic-eval"
+repository-code: "https://github.com/hongping-zh/ecocompute-dynamic-eval"
+repository-artifact: "https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata"
+license: MIT
+keywords:
+  - large language models
+  - quantization
+  - energy efficiency
+  - GPU inference
+  - green AI
+  - bitsandbytes
+  - INT8 paradox
+  - NF4 crossover
+  - NVIDIA Blackwell
+  - NVIDIA Ada Lovelace
+  - NVIDIA Ampere
+  - reproducible research
+abstract: "We present empirical evidence of two quantization efficiency paradoxes in LLM inference across three NVIDIA GPU architectures. Through 32 rigorously-controlled measurements, we discovered that (1) default bitsandbytes INT8 increases energy by 17-147% due to mixed-precision decomposition overhead, and (2) NF4 exhibits a crossover threshold at approximately 5-6B parameters. Ablation experiments establish that disabling mixed-precision decomposition recovers +79-98% throughput and -35-41% energy. All data, metadata, and reproducibility artifacts are publicly available."
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Zhang
+      given-names: Hongping
+      email: zhanghongping1982@gmail.com
+  title: "Energy Efficiency of Quantized Large Language Model Inference: Evidence for Quantization Efficiency Paradoxes on NVIDIA Blackwell, Ada Lovelace, and Ampere Architectures"
+  year: 2026
+  journal: "arXiv preprint"
+  notes: "32 measurements across RTX 5090 Blackwell, RTX 4090D Ada Lovelace, and A800 Ampere"
