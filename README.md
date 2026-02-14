@@ -6,6 +6,9 @@
 [![Reproducible](https://img.shields.io/badge/Reproducible-✓-success.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)
 [![Measurements](https://img.shields.io/badge/Measurements-23-orange.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata/COMPLETE_DATASET_MEMO.md)
 [![Data Quality](https://img.shields.io/badge/CV-<2%25-success.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata)
+[![Discussions](https://img.shields.io/github/discussions/hongping-zh/ecocompute-dynamic-eval)](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions)
+[![Issues](https://img.shields.io/github/issues/hongping-zh/ecocompute-dynamic-eval)](https://github.com/hongping-zh/ecocompute-dynamic-eval/issues)
+[![Cite](https://img.shields.io/badge/Cite-BibTeX-blue.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/blob/main/CITATION.cff)
 
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by 17-33% due to mixed-precision decomposition. Disabling this pathway recovers **+79% throughput** and **−36% energy**, achieving **5.5% energy savings** vs FP16.
 
@@ -84,7 +87,43 @@ This benchmark follows rigorous reproducibility standards:
 
 ---
 
-## 🔬 Reproducibility Artifacts
+## 💬 Community & Contributions
+
+### Join the Discussion
+
+We welcome community participation! Join our discussions to:
+- 🙋 **Ask questions** about the research methodology or results
+- 📊 **Share your benchmark results** on different hardware
+- 💡 **Suggest new experiments** or visualizations
+- 🤝 **Find collaborators** for extended studies
+- 🎓 **Discuss academic topics** related to energy efficiency
+
+[![Join Discussion](https://img.shields.io/badge/Join-Discussion-blue?style=for-the-badge&logo=github)](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions)
+
+**Quick links**:
+- [📣 Announcements](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions/categories/announcements) - Project updates
+- [� Q&A](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions/categories/q-a) - Ask questions
+- [📊 Results Sharing](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions/categories/results-sharing) - Share your data
+- [🤝 Collaboration](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions/categories/collaboration) - Find partners
+
+### Report Issues or Share Data
+
+Found a bug or have benchmark results to share? Use our Issue templates:
+
+- [🐛 Report a Bug](https://github.com/hongping-zh/ecocompute-dynamic-eval/issues/new?template=bug_report.yml)
+- [📊 Share Benchmark Results](https://github.com/hongping-zh/ecocompute-dynamic-eval/issues/new?template=benchmark_result.yml)
+- [🙋 Ask a Question](https://github.com/hongping-zh/ecocompute-dynamic-eval/issues/new?template=question.yml)
+
+### We Especially Welcome
+
+- **Hardware coverage**: Measurements on H100, A100, AMD MI300, Intel GPUs
+- **Model coverage**: LLaMA-3, Gemma, Qwen, other architectures
+- **Batch size studies**: Energy efficiency at different batch sizes
+- **Accuracy assessment**: Perplexity and downstream task evaluation for pure INT8
+
+---
+
+## �🔬 Reproducibility Artifacts
 
 All metadata required to reproduce this research is available in the [`metadata/`](https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata) directory:
 
@@ -156,9 +195,11 @@ This research prevents a potential industry-wide mistake:
 
 ---
 
-## 📚 Citation
+## 🎓 Citation
 
-If you use this data or methodology, please cite:
+If you use this dataset or findings in your research, please cite:
+
+[![Cite](https://img.shields.io/badge/Cite-BibTeX-blue.svg?style=for-the-badge)](https://github.com/hongping-zh/ecocompute-dynamic-eval/blob/main/CITATION.cff)
 
 ```bibtex
 @techreport{zhang2026quantization,
@@ -172,6 +213,8 @@ If you use this data or methodology, please cite:
 }
 ```
 
+GitHub will also display a **"Cite this repository"** button using our [CITATION.cff](CITATION.cff) file.
+
 ---
 
 ## 🔗 Links
@@ -184,13 +227,12 @@ If you use this data or methodology, please cite:
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you:
-- Run benchmarks on additional GPUs (A100, H100, etc.)
-- Test alternative quantization methods (GPTQ, TensorRT, llama.cpp)
-- Measure accuracy impact of pure INT8
-- Find issues or have suggestions
+Contributions are welcome! Please see the [Community & Contributions](#-community--contributions) section above for:
+- How to join discussions
+- Issue templates for bug reports and data sharing
+- Areas where we especially need help
 
-Please open an issue or submit a pull request.
+For code contributions, please open a pull request with a clear description of your changes.
 
 ---
 
