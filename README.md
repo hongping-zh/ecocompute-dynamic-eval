@@ -12,6 +12,8 @@
 
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by 17-33% due to mixed-precision decomposition. Disabling this pathway recovers **+79% throughput** and **−36% energy**, achieving **5.5% energy savings** vs FP16.
 
+> **Research Scope**: This work focuses on energy efficiency diagnosis. Accuracy assessment (perplexity, downstream tasks) is not yet complete. The default `threshold=6.0` preserves accuracy but incurs significant performance cost (122-147% energy increase on Ampere/Ada). Pure INT8 (`threshold=0.0`) shows major performance gains, but accuracy impact requires validation. Next steps: PPL and MMLU evaluation—contributions welcome!
+
 Compare AI models by **Accuracy × Cost × Carbon** — RTX 5090 benchmarks reveal that 4-bit quantization wastes energy on small models.
 
 ---
