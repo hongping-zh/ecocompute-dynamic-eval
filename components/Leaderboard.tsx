@@ -230,7 +230,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   };
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div className="space-y-6">
       {/* Header Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
@@ -406,8 +406,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
       </div>
 
       {/* Main Table */}
-      <div className="flex-1 overflow-hidden bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
-        <div className="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-semibold sticky top-0 z-10 shadow-sm">
               <tr>
