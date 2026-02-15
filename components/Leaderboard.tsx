@@ -79,6 +79,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [rtx5090Only, setRtx5090Only] = useState(false);
+  const [a800Only, setA800Only] = useState(false);
   const [showWeights, setShowWeights] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelData | null>(null);
   const [weights, setWeights] = useState({
@@ -125,8 +126,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   };
 
   const visibleModels = useMemo(() => {
-    return rtx5090Only ? models.filter(m => m.tags.includes('rtx5090-verified')) : models;
-  }, [models, rtx5090Only]);
+    if (rtx5090Only) return models.filter(m => m.tags.includes('rtx5090-verified'));
+    if (a800Only) return models.filter(m => m.tags.includes('a800-verified'));
+    return models;
+  }, [models, rtx5090Only, a800Only]);
 
   // Composite score: normalize each metric 0-1 then weighted sum
   const compositeScores = useMemo(() => {
@@ -259,11 +262,19 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
           </button>
           
           <button
-            onClick={() => setRtx5090Only(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium"
+            onClick={() => {
+              if (!rtx5090Only && !a800Only) { setRtx5090Only(true); setA800Only(false); }
+              else if (rtx5090Only) { setRtx5090Only(false); setA800Only(true); }
+              else { setRtx5090Only(false); setA800Only(false); }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+              a800Only ? 'bg-orange-50 border-orange-300 text-orange-600' :
+              rtx5090Only ? 'bg-green-50 border-green-300 text-green-700' :
+              'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
           >
             <Filter className="w-4 h-4" />
-            {rtx5090Only ? 'RTX 5090 Only' : 'All Models'}
+            {rtx5090Only ? 'RTX 5090 Only' : a800Only ? 'A800 Batch Size' : 'All Models'}
           </button>
 
           <button

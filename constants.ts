@@ -377,6 +377,81 @@ export const INITIAL_MODELS: ModelData[] = [
     }
   },
 
+  // ========== A800 Batch Size Experiment (Real Data, 2026-02-15) ==========
+  // Mistral-7B-Instruct-v0.2, Pure INT8 (threshold=0.0), 7 batch sizes
+  {
+    id: 'mistral-7b-int8-a800-bs1',
+    name: 'Mistral-7B Pure INT8 (BS=1)',
+    provider: 'A800 Batch Size',
+    accuracy: 91.9,
+    executionTime: 0.0526,  // 1000/19.0
+    cost: 0.00018,
+    carbonImpact: 0.070,    // 1768 J/1k * 0.4 / 3600 * 1000
+    energyEfficiency: 60,   // 19.0 / 252 * 1000 ≈ 75, adjusted for per-request
+    tags: ['8bit', 'pure-int8', 'bs1', 'a800-verified', 'inefficient'],
+    provenance: {
+      source: 'EcoCompute A800 Batch Size Experiment',
+      confidence: 'measured',
+      methodology: 'A800 + Mistral-7B + Pure INT8 (threshold=0.0). BS=1: 1,768 J/request, 45.3% GPU util. n=10, CV<1%.',
+      lastVerified: '2026-02-15',
+      citation: 'https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata/batch_size_experiment'
+    }
+  },
+  {
+    id: 'mistral-7b-int8-a800-bs8',
+    name: 'Mistral-7B Pure INT8 (BS=8)',
+    provider: 'A800 Batch Size',
+    accuracy: 91.9,
+    executionTime: 0.0067,  // 1000/150.3
+    cost: 0.00003,
+    carbonImpact: 0.011,    // 284 J/1k
+    energyEfficiency: 533,   // 150.3 / 282 * 1000
+    tags: ['8bit', 'pure-int8', 'bs8', 'a800-verified'],
+    provenance: {
+      source: 'EcoCompute A800 Batch Size Experiment',
+      confidence: 'measured',
+      methodology: 'A800 + Mistral-7B + Pure INT8. BS=8: 284 J/request (−84% vs BS=1), 50.4% GPU util. n=10, CV<1%.',
+      lastVerified: '2026-02-15',
+      citation: 'https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata/batch_size_experiment'
+    }
+  },
+  {
+    id: 'mistral-7b-int8-a800-bs16',
+    name: 'Mistral-7B Pure INT8 (BS=16) ⭐',
+    provider: 'A800 Batch Size',
+    accuracy: 91.9,
+    executionTime: 0.0034,  // 1000/296.4
+    cost: 0.00002,
+    carbonImpact: 0.008,    // 205 J/1k
+    energyEfficiency: 1002,  // 296.4 / 296 * 1000
+    tags: ['8bit', 'pure-int8', 'bs16', 'a800-verified', 'energy-efficient'],
+    provenance: {
+      source: 'EcoCompute A800 Batch Size Experiment',
+      confidence: 'measured',
+      methodology: 'A800 + Mistral-7B + Pure INT8. BS=16: 205 J/request (−88% vs BS=1), 76.8% GPU util. RECOMMENDED for interactive apps. n=10, CV<1%.',
+      lastVerified: '2026-02-15',
+      citation: 'https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata/batch_size_experiment'
+    }
+  },
+  {
+    id: 'mistral-7b-int8-a800-bs64',
+    name: 'Mistral-7B Pure INT8 (BS=64) ⭐',
+    provider: 'A800 Batch Size',
+    accuracy: 91.9,
+    executionTime: 0.00095, // 1000/1052.5
+    cost: 0.000008,
+    carbonImpact: 0.003,    // 76 J/1k
+    energyEfficiency: 3354,  // 1052.5 / 314 * 1000
+    tags: ['8bit', 'pure-int8', 'bs64', 'a800-verified', 'energy-efficient'],
+    provenance: {
+      source: 'EcoCompute A800 Batch Size Experiment',
+      confidence: 'measured',
+      methodology: 'A800 + Mistral-7B + Pure INT8. BS=64: 76 J/request (−95.7% vs BS=1), 91% GPU util. BEST throughput. n=10, CV<1%.',
+      lastVerified: '2026-02-15',
+      citation: 'https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/metadata/batch_size_experiment'
+    }
+  },
+
   // ========== Commercial API Models (Estimated) ==========
   {
     id: 'm1',
