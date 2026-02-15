@@ -8,7 +8,8 @@ import { Methodology } from './components/Methodology';
 import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
 import { AITools } from './components/AITools';
 import { BatchSizeAnalysis } from './components/BatchSizeAnalysis';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers } from 'lucide-react';
+import { ResearchBackground } from './components/ResearchBackground';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -127,6 +128,14 @@ const App: React.FC = () => {
             <span className="hidden lg:block font-medium">Methodology</span>
           </button>
 
+          <button 
+            onClick={() => navigateToView(AppView.RESEARCH_BACKGROUND)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.RESEARCH_BACKGROUND ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <Info className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">About</span>
+          </button>
+
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-3">
@@ -164,6 +173,7 @@ const App: React.FC = () => {
                     {view === AppView.DEEPSEEK_VS_GPT && 'DeepSeek vs GPT'}
                     {view === AppView.METHODOLOGY && 'Methodology & Data Sources'}
                     {view === AppView.BATCH_SIZE && 'Batch Size Optimization'}
+                    {view === AppView.RESEARCH_BACKGROUND && 'Research Background'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
@@ -172,6 +182,7 @@ const App: React.FC = () => {
                     {view === AppView.DEEPSEEK_VS_GPT && 'A practical workflow to compare cost and carbon impact for your workload.'}
                     {view === AppView.METHODOLOGY && 'How the metrics are measured and how estimates are derived.'}
                     {view === AppView.BATCH_SIZE && 'A800 + Mistral-7B + Pure INT8: 95.7% energy reduction across batch sizes 1–64.'}
+                    {view === AppView.RESEARCH_BACKGROUND && 'Motivation, methodology, related work, and core contributions.'}
                 </p>
             </div>
             
@@ -198,6 +209,7 @@ const App: React.FC = () => {
             {view === AppView.DEEPSEEK_VS_GPT && <DeepSeekVsGpt onOpenCalculator={() => openCalculatorTemplate('deepseek-vs-gpt')} />}
             {view === AppView.METHODOLOGY && <Methodology />}
             {view === AppView.BATCH_SIZE && <BatchSizeAnalysis />}
+            {view === AppView.RESEARCH_BACKGROUND && <ResearchBackground />}
         </div>
       </main>
 
