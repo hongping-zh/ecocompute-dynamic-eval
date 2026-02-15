@@ -1,0 +1,22 @@
+{
+  "benchmark_id": "a800_batch_size_20260215_131345",
+  "timestamp": "20260215_131345",
+  "model": "mistralai/Mistral-7B-Instruct-v0.2",
+  "quantization": "Pure INT8 (llm_int8_threshold=0.0)",
+  "gpu": "NVIDIA A800-SXM4-80GB",
+  "batch_sizes": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "n_runs_per_batch": 10,
+  "input_length": 256,
+  "output_length": 256,
+  "total_runs": 70,
+  "pytorch_version": "2.4.1+cu121",
+  "cuda_version": "12.1"
+}
