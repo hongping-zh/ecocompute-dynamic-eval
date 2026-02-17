@@ -1,6 +1,13 @@
 # EcoCompute OpenClaw Skill — Usage Manual
 
-> **Version**: 1.0 · **Author**: Hongping Zhang · **Last Updated**: 2026-02-16
+> **Version**: 2.0 · **Author**: Hongping Zhang · **Last Updated**: 2026-02-16
+>
+> **What's New in v2.0**:
+> - 🆕 Extended input parameters: `hardware_platform`, `sequence_length`, `generation_length`, `precision`
+> - 📊 Enhanced outputs: confidence intervals, energy efficiency metrics, optimization insights
+> - 🔬 Full measurement transparency: software versions, limitations, extrapolation notes
+> - ⚠️ Robust parameter validation and error handling
+> - 💡 Context-specific recommendations and trade-off analysis
 
 The EcoCompute Skill transforms your AI agent into an **LLM energy efficiency expert**, equipped with 93+ empirical measurements across 3 NVIDIA GPU architectures. It prevents common energy waste patterns that even experienced engineers miss.
 
@@ -81,6 +88,15 @@ Once installed, just talk to your agent naturally. The skill activates automatic
 | "How much will 1M requests/month cost?" | → **ESTIMATE**: energy, dollar cost, and carbon footprint |
 | "Review my inference code for energy waste" | → **AUDIT**: scans for known anti-patterns |
 
+### New in v2.0: Advanced Parameter Control
+
+| Say This | Skill Does This |
+|----------|----------------|
+| "Optimize Llama-3-8B on H100 with 1024 input tokens, 512 output" | → Uses `sequence_length` and `generation_length` for accurate estimates |
+| "Compare energy for batch sizes 1, 8, 32 on RTX 4090D" | → Multi-batch comparison with scaling analysis |
+| "What if I use BF16 instead of FP16 on A100?" | → `precision` parameter comparison with architecture-specific advice |
+| "Validate my setup: Qwen2-7B, A800, INT8, BS=16, 2048 context" | → Full parameter validation with warnings and optimization suggestions |
+
 ---
 
 ## 3. The 5 Protocols
@@ -100,23 +116,71 @@ Once installed, just talk to your agent naturally. The skill activates automatic
 - Expected throughput, energy, cost, and carbon estimates
 - Warnings about potential paradoxes
 
-**Example prompt**:
+**Example prompt (v2.0 with extended parameters)**:
 ```
 I'm deploying Mistral-7B-Instruct on NVIDIA A800 for a production API 
-serving ~500K requests/month. What's the most energy-efficient setup?
+serving ~500K requests/month. Average input: 800 tokens, output: 400 tokens.
+What's the most energy-efficient setup?
 ```
 
-**Example output** (summarized):
+**Example output (v2.0 enhanced)**:
 ```
 ## Recommended Configuration
-- Precision: FP16 (A800 has 80GB — no memory pressure)
-- Batch size: 16–32 (use vLLM continuous batching)
-- Expected: ~284 tok/s (BS=16), 0.98 J/request
-- Monthly: ~490 kWh, $20, 272 kgCO2
+- Model: Mistral-7B-Instruct-v0.2 (7B parameters)
+- GPU: NVIDIA A800 (Ampere, 80GB HBM2e)
+- Precision: FP16
+- Batch size: 16
+- Sequence length: 800 tokens → Generation: 400 tokens
 
-## Warning
-Do NOT use load_in_8bit=True on A800 — it increases energy by 122–147%.
-If you must use INT8, set llm_int8_threshold=0.0.
+## Performance Metrics
+- Throughput: 284 tok/s (±1.8% std dev, n=10)
+- Latency: 56 ms/request (BS=16)
+- GPU Utilization: ~78% (estimated)
+
+## Energy & Efficiency
+- Energy per 1k tokens: 345 J (±17 J, 95% CI)
+- Energy per request: 138 J (for 400 token generation)
+- Energy efficiency: 2.90 tokens/J
+- Power draw: 312W average (298-327W range)
+
+## Cost & Carbon (Monthly Estimates)
+- For 500K requests/month:
+  - Energy: 19.2 kWh
+  - Cost: $1.63 (at $0.085/kWh China datacenter)
+  - Carbon: 10.7 kgCO2 (at 555 gCO2/kWh China grid)
+
+## Why This Configuration
+- **FP16 chosen**: A800 has 80GB VRAM — no memory pressure for 7B model
+  - Mistral-7B FP16: ~14GB VRAM, leaves 66GB for KV cache and batching
+  - Quantization would add overhead without memory benefit
+- **BS=16 chosen**: Balances throughput and latency for API workload
+  - 87.5% energy reduction vs BS=1 (reference: batch_size_guide.md)
+  - Latency <100ms acceptable for most APIs
+  - Use vLLM continuous batching for dynamic request arrival
+- **Sequence length impact**: 800→400 tokens = 1.56× baseline energy
+  - Baseline (512→256): 345 J/1k tok measured on A800
+  - Your config: ~345 J/1k tok (energy/token is relatively constant)
+
+## 💡 Optimization Insights
+- Increasing to BS=32 would save additional 8% energy but increase latency to 112ms
+- Current config is 95.7% more efficient than BS=1 (common mistake)
+- If latency <50ms required, use BS=8 (still 87% better than BS=1)
+
+## ⚠️ Warning: Avoid These Pitfalls
+- **DO NOT use `load_in_8bit=True`** on A800 — increases energy by 122–147%
+- If you must use INT8, set `llm_int8_threshold=0.0` (saves 3-5% vs FP16)
+- Avoid NF4 on datacenter GPUs with ample VRAM (11-18% energy penalty)
+
+## 📊 Detailed Analysis
+View interactive dashboard: https://hongping-zh.github.io/ecocompute-dynamic-eval/
+GitHub repository: https://github.com/hongping-zh/ecocompute-dynamic-eval
+
+## 🔬 Measurement Transparency
+- Hardware: NVIDIA A800, Driver 535.183.01
+- Software: PyTorch 2.4.1, CUDA 12.1, transformers 4.47.0
+- Method: NVML 10Hz power monitoring, n=10 runs, CV<2%
+- Baseline: Mistral-7B FP16 BS=16 measured directly on A800
+- Limitations: Sequence length extrapolated (baseline: 512→256 tokens)
 ```
 
 ---
