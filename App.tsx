@@ -9,7 +9,7 @@ import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
 import { AITools } from './components/AITools';
 import { BatchSizeAnalysis } from './components/BatchSizeAnalysis';
 import { ResearchBackground } from './components/ResearchBackground';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info } from 'lucide-react';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info, Bot } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -158,6 +158,16 @@ const App: React.FC = () => {
             >
               <Github className="w-5 h-5 flex-shrink-0" />
               <span className="hidden lg:block font-medium text-sm">GitHub ⭐</span>
+            </a>
+           <a 
+              href="https://clawhub.ai/hongping-zh/ecocompute" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+              title="Use as AI Agent Skill"
+            >
+              <Bot className="w-5 h-5 flex-shrink-0" />
+              <span className="hidden lg:block font-medium text-sm">AI Skill 🤖</span>
             </a>
         </div>
       </aside>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Cpu, Zap, TrendingDown, Target, Users, ExternalLink, FlaskConical, GitBranch } from 'lucide-react';
+import { BookOpen, Cpu, Zap, TrendingDown, Target, Users, ExternalLink, FlaskConical, GitBranch, Bot } from 'lucide-react';
 
 export const ResearchBackground: React.FC = () => {
   return (
@@ -237,6 +237,7 @@ export const ResearchBackground: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
+            { label: '🤖 AI Agent Skill', url: 'https://clawhub.ai/hongping-zh/ecocompute', desc: 'Use as ClawHub Skill for AI agents', featured: true },
             { label: 'GitHub Repository', url: 'https://github.com/hongping-zh/ecocompute-dynamic-eval', desc: 'Source code, data, metadata' },
             { label: 'bitsandbytes Issue #1867', url: 'https://github.com/bitsandbytes-foundation/bitsandbytes/issues/1867', desc: 'INT8 energy overhead report' },
             { label: 'bitsandbytes Issue #1851', url: 'https://github.com/bitsandbytes-foundation/bitsandbytes/issues/1851', desc: 'NF4 energy penalty on Blackwell' },
@@ -249,11 +250,21 @@ export const ResearchBackground: React.FC = () => {
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-start gap-3 p-4 border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all"
+              className={`group flex items-start gap-3 p-4 rounded-xl transition-all ${
+                item.featured 
+                  ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-300 hover:border-purple-400 hover:shadow-lg' 
+                  : 'border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+              }`}
             >
-              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 mt-0.5 flex-shrink-0" />
+              {item.featured ? (
+                <Bot className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+              ) : (
+                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 mt-0.5 flex-shrink-0" />
+              )}
               <div>
-                <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">{item.label}</p>
+                <p className={`text-sm font-semibold ${item.featured ? 'text-purple-700' : 'text-slate-800 group-hover:text-indigo-700'}`}>
+                  {item.label}
+                </p>
                 <p className="text-xs text-slate-500">{item.desc}</p>
               </div>
             </a>
