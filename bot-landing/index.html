@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCompute Energy Auditor — Auto-Audit Your PRs for LLM Energy Waste</title>
+  <meta name="description" content="Free GitHub Bot that auto-audits your Pull Requests for LLM energy waste. Catches hidden issues like the INT8 147% energy paradox. One-click install, zero config." />
+  <meta property="og:title" content="EcoCompute Energy Auditor — Stop Wasting GPU Energy" />
+  <meta property="og:description" content="Free GitHub Bot: auto-audit PRs for LLM energy waste. 93+ real measurements, 3 GPU architectures. One-click install." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://hongping-zh.github.io/ecocompute-dynamic-eval/bot-landing/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="EcoCompute Energy Auditor — Auto-Audit LLM Energy Waste" />
+  <meta name="twitter:description" content="Free GitHub Bot. Catches the INT8 147% energy paradox and more. One-click install." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="canonical" href="https://hongping-zh.github.io/ecocompute-dynamic-eval/bot-landing/" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0',
+              300: '#86efac', 400: '#4ade80', 500: '#22c55e',
+              600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-gradient {
+      background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(34,197,94,0.15) 0%, transparent 70%);
+    }
+    .glow-btn {
+      box-shadow: 0 0 20px rgba(34,197,94,0.3), 0 4px 15px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .glow-btn:hover {
+      box-shadow: 0 0 30px rgba(34,197,94,0.5), 0 6px 20px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+      transition: transform 0.2s ease;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .code-block {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .code-block .line-bad { color: #f87171; text-decoration: line-through; opacity: 0.6; }
+    .code-block .line-good { color: #4ade80; }
+    .code-block .line-comment { color: #64748b; }
+    .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .fade-in:nth-child(1) { animation-delay: 0.1s; }
+    .fade-in:nth-child(2) { animation-delay: 0.2s; }
+    .fade-in:nth-child(3) { animation-delay: 0.3s; }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: '+';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      border-radius: 50%;
+      background: #f0fdf4;
+      color: #16a34a;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    details[open] summary::before {
+      content: '−';
+      background: #16a34a;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+
+  <!-- ===================== NAV ===================== -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
+    <div class="max-w-5xl mx-auto flex items-center justify-between px-6 py-3">
+      <a href="#" class="flex items-center gap-2 font-bold text-lg">
+        <span class="text-2xl">⚡</span>
+        <span class="gradient-text">EcoCompute</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="#how-it-works" class="hidden sm:inline text-sm text-slate-500 hover:text-slate-900 transition">How it works</a>
+        <a href="#faq" class="hidden sm:inline text-sm text-slate-500 hover:text-slate-900 transition">FAQ</a>
+        <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" target="_blank" class="hidden sm:inline text-sm text-slate-500 hover:text-slate-900 transition">GitHub</a>
+        <a href="https://github.com/apps/ecocompute-energy-auditor"
+           target="_blank"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition">
+          Install Free
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero-gradient pt-28 pb-16 sm:pt-36 sm:pb-24">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-medium text-brand-700 bg-brand-100 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+        Free &amp; Open Source &middot; Zero Config &middot; 93+ Real Measurements
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+        Your LLM code is<br/>
+        <span class="gradient-text">secretly wasting energy</span>
+      </h1>
+
+      <p class="mt-6 text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
+        One line of code can waste <strong class="text-slate-800">147% more energy</strong>.
+        Install our GitHub Bot and it auto-audits every PR &mdash; catching issues that even experienced engineers miss.
+      </p>
+
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://github.com/apps/ecocompute-energy-auditor"
+           target="_blank"
+           class="glow-btn inline-flex items-center gap-3 px-8 py-4 bg-brand-600 text-white text-lg font-bold rounded-xl hover:bg-brand-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          Install on GitHub
+        </a>
+        <a href="#how-it-works"
+           class="inline-flex items-center gap-2 px-6 py-4 text-slate-600 text-lg font-medium hover:text-slate-900 transition">
+          See how it works
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STATS ===================== -->
+  <section class="py-16 bg-slate-50">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="stat-card rounded-2xl border border-slate-200 p-8 text-center shadow-sm fade-in">
+          <div class="text-5xl font-black text-red-500">147%</div>
+          <div class="mt-2 text-sm font-semibold text-slate-800">Energy Wasted</div>
+          <div class="mt-1 text-xs text-slate-400">by default <code class="bg-slate-100 px-1 py-0.5 rounded text-[11px]">load_in_8bit=True</code></div>
+        </div>
+        <div class="stat-card rounded-2xl border border-slate-200 p-8 text-center shadow-sm fade-in">
+          <div class="text-5xl font-black text-amber-500">95.7%</div>
+          <div class="mt-2 text-sm font-semibold text-slate-800">GPU Power Wasted</div>
+          <div class="mt-1 text-xs text-slate-400">when using <code class="bg-slate-100 px-1 py-0.5 rounded text-[11px]">batch_size=1</code></div>
+        </div>
+        <div class="stat-card rounded-2xl border border-slate-200 p-8 text-center shadow-sm fade-in">
+          <div class="text-5xl font-black text-brand-600">93+</div>
+          <div class="mt-2 text-sm font-semibold text-slate-800">Real Measurements</div>
+          <div class="mt-1 text-xs text-slate-400">across 3 NVIDIA GPU architectures</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PROBLEM ===================== -->
+  <section class="py-20">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">The problem no one talks about</h2>
+        <p class="mt-4 text-slate-500 max-w-xl mx-auto">
+          Common quantization advice is <em>wrong</em>. We measured it.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Bad code -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold">✗</span>
+            <span class="text-sm font-semibold text-red-600">What most people write</span>
+          </div>
+          <div class="code-block rounded-xl p-5 text-sm leading-relaxed overflow-x-auto">
+            <div class="line-comment"># "INT8 saves energy, right?"</div>
+            <div>config = BitsAndBytesConfig(</div>
+            <div class="line-bad pl-4">load_in_8bit=True,</div>
+            <div>)</div>
+            <div class="mt-2 line-comment"># "Just process one at a time"</div>
+            <div class="line-bad">for prompt in prompts:</div>
+            <div class="line-bad pl-4">model.generate(prompt)</div>
+          </div>
+          <p class="mt-3 text-xs text-red-400 font-medium">+147% energy &middot; -76% throughput &middot; +95.7% waste</p>
+        </div>
+
+        <!-- Good code -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 text-xs font-bold">✓</span>
+            <span class="text-sm font-semibold text-green-600">What the Bot recommends</span>
+          </div>
+          <div class="code-block rounded-xl p-5 text-sm leading-relaxed overflow-x-auto">
+            <div class="line-comment"># Pure INT8 — no mixed-precision overhead</div>
+            <div>config = BitsAndBytesConfig(</div>
+            <div class="pl-4">load_in_8bit=True,</div>
+            <div class="line-good pl-4">llm_int8_threshold=0.0,  # key fix</div>
+            <div>)</div>
+            <div class="mt-2 line-comment"># Batched inference</div>
+            <div class="line-good">outputs = model.generate(batch)</div>
+          </div>
+          <p class="mt-3 text-xs text-green-500 font-medium">Saves energy &middot; +84% throughput &middot; Data-backed</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section id="how-it-works" class="py-20 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">3 steps. 60 seconds.</h2>
+        <p class="mt-4 text-slate-500">Zero configuration. No code changes needed.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-10">
+        <!-- Step 1 -->
+        <div class="text-center fade-in">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-100 text-brand-700 text-2xl font-black mb-5">1</div>
+          <h3 class="font-bold text-lg">Install the Bot</h3>
+          <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+            Click <strong>"Install"</strong> on the
+            <a href="https://github.com/apps/ecocompute-energy-auditor" target="_blank" class="text-brand-600 underline underline-offset-2 hover:text-brand-800">GitHub App page</a>.
+            Choose which repos to audit.
+          </p>
+        </div>
+        <!-- Step 2 -->
+        <div class="text-center fade-in">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-100 text-brand-700 text-2xl font-black mb-5">2</div>
+          <h3 class="font-bold text-lg">Open a Pull Request</h3>
+          <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+            Push code with LLM quantization configs
+            (<code class="text-xs bg-slate-100 px-1 py-0.5 rounded">BitsAndBytesConfig</code>, etc.)
+            and create a PR as usual.
+          </p>
+        </div>
+        <!-- Step 3 -->
+        <div class="text-center fade-in">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-100 text-brand-700 text-2xl font-black mb-5">3</div>
+          <h3 class="font-bold text-lg">Get Instant Audit</h3>
+          <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+            The Bot scans the diff, flags energy waste patterns, and posts a comment with <strong>data-backed fixes</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BOT PREVIEW ===================== -->
+  <section class="py-20">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">What the Bot looks like in action</h2>
+        <p class="mt-4 text-slate-500">Automatic PR comment with prioritized issues and fixes</p>
+      </div>
+
+      <!-- Mock PR comment -->
+      <div class="max-w-2xl mx-auto border border-slate-200 rounded-xl shadow-lg overflow-hidden bg-white">
+        <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200">
+          <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">E</div>
+          <div>
+            <span class="font-semibold text-sm">ecocompute-energy-auditor</span>
+            <span class="text-xs text-slate-400 ml-1">bot</span>
+          </div>
+          <span class="ml-auto text-xs text-slate-400">just now</span>
+        </div>
+        <div class="px-5 py-5 text-sm leading-relaxed">
+          <h3 class="font-bold text-base mb-3">⚡ EcoCompute Energy Audit</h3>
+          <p class="text-slate-500 mb-4">Scanned <strong>1</strong> Python file(s) in this PR. <strong class="text-red-600">1 critical issue(s)</strong> found.</p>
+
+          <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <div class="font-semibold text-red-700 text-sm">🔴 Critical: Default INT8 (bitsandbytes mixed-precision)</div>
+            <p class="mt-1 text-xs text-red-600/80">
+              <code>load_in_8bit=True</code> without <code>llm_int8_threshold=0.0</code> causes 17–147% energy waste due to INT8↔FP16 type conversion at every linear layer.
+            </p>
+            <div class="mt-2 text-xs font-semibold text-red-700">Fix: Add <code class="bg-red-100 px-1 py-0.5 rounded">llm_int8_threshold=0.0</code></div>
+          </div>
+
+          <div class="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+            <div class="font-semibold text-amber-700 text-sm">🟡 Warning: Sequential single-request processing (BS=1)</div>
+            <p class="mt-1 text-xs text-amber-600/80">
+              Processing prompts in a loop wastes up to 95.7% energy. Use batched inference or vLLM continuous batching.
+            </p>
+          </div>
+
+          <p class="mt-4 text-xs text-slate-400">
+            📊 Based on 93+ measurements across RTX 4090D / A800 / RTX 5090 &middot;
+            <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" class="text-brand-600 hover:underline">View full data</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DETECTION PATTERNS ===================== -->
+  <section class="py-20 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">What it detects</h2>
+        <p class="mt-4 text-slate-500">6 energy waste patterns, backed by real GPU measurements</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">!</span>
+          <div>
+            <div class="font-semibold text-sm">Default INT8 config</div>
+            <div class="text-xs text-slate-400 mt-0.5">17–147% energy waste</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">!</span>
+          <div>
+            <div class="font-semibold text-sm">Mixed precision conflicts</div>
+            <div class="text-xs text-slate-400 mt-0.5">Unpredictable waste</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold">⚠</span>
+          <div>
+            <div class="font-semibold text-sm">NF4 on small models (&lt;3B)</div>
+            <div class="text-xs text-slate-400 mt-0.5">~29% energy penalty</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold">⚠</span>
+          <div>
+            <div class="font-semibold text-sm">Batch size = 1 loops</div>
+            <div class="text-xs text-slate-400 mt-0.5">Up to 95.7% waste</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">i</span>
+          <div>
+            <div class="font-semibold text-sm">Missing device_map</div>
+            <div class="text-xs text-slate-400 mt-0.5">Potential waste</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200">
+          <span class="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">i</span>
+          <div>
+            <div class="font-semibold text-sm">Redundant quant params</div>
+            <div class="text-xs text-slate-400 mt-0.5">Code quality</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FAQ ===================== -->
+  <section id="faq" class="py-20">
+    <div class="max-w-2xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="space-y-3">
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Is it free?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            <strong>100% free.</strong> Open source project, open data, open bot. No premium tier, no catch.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Is my code safe?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            The Bot only reads PR diffs (code changes), <strong>never the full repo</strong>. No code is stored. Everything is discarded after the audit.
+            The Bot is fully open-source — <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" class="text-brand-600 underline">audit our code</a>.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Will it modify my code?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            <strong>No.</strong> The Bot only posts comments. It will never push commits or change your code. You decide which suggestions to adopt.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Will it spam my PRs?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            No. The Bot is <strong>completely silent</strong> when: (1) PR has no Python files, (2) Python files have no quantization code, (3) your config is correct. It only speaks when it finds a real issue.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Can I install it on an Organization?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            Yes. Choose your Organization account during installation. Requires org admin permissions.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            How do I uninstall?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            Go to <a href="https://github.com/settings/installations" target="_blank" class="text-brand-600 underline">github.com/settings/installations</a>,
+            find <code>ecocompute-energy-auditor</code>, click <strong>Configure → Uninstall</strong>.
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <summary class="flex items-center px-5 py-4 font-semibold text-sm select-none hover:bg-slate-50 transition">
+            Where does the data come from?
+          </summary>
+          <div class="px-5 pb-4 text-sm text-slate-500 ml-9">
+            93+ empirical measurements on RTX 4090D, A800, and RTX 5090. NVML 10Hz power sampling, n=10 per config, CV&lt;2%.
+            <a href="https://hongping-zh.github.io/ecocompute-dynamic-eval/" target="_blank" class="text-brand-600 underline">Explore the full dataset</a>.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA ===================== -->
+  <section class="py-20 bg-gradient-to-b from-brand-50 to-white">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold">Stop guessing.<br/>Start measuring.</h2>
+      <p class="mt-4 text-slate-500 max-w-lg mx-auto">
+        Install the Bot in 60 seconds. Next time you open a PR, you'll know exactly where your energy goes.
+      </p>
+      <div class="mt-8">
+        <a href="https://github.com/apps/ecocompute-energy-auditor"
+           target="_blank"
+           class="glow-btn inline-flex items-center gap-3 px-8 py-4 bg-brand-600 text-white text-lg font-bold rounded-xl hover:bg-brand-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          Install on GitHub — It's Free
+        </a>
+      </div>
+      <p class="mt-6 text-xs text-slate-400">
+        Works with any public or private repo &middot; Supports GitHub Organizations
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="border-t border-slate-200 py-10">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-sm text-slate-400">
+          <span class="text-lg">⚡</span>
+          <span>EcoCompute Energy Auditor</span>
+          <span>&middot;</span>
+          <span>Built by <a href="https://github.com/hongping-zh" target="_blank" class="text-slate-600 hover:underline">Hongping Zhang</a></span>
+        </div>
+        <div class="flex items-center gap-5 text-sm text-slate-400">
+          <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" target="_blank" class="hover:text-slate-700 transition">GitHub</a>
+          <a href="https://hongping-zh.github.io/ecocompute-dynamic-eval/" target="_blank" class="hover:text-slate-700 transition">Full Dashboard</a>
+          <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval/issues" target="_blank" class="hover:text-slate-700 transition">Feedback</a>
+        </div>
+      </div>
+      <p class="text-center text-xs text-slate-300 mt-6">
+        "Measure, don't assume. Reproduce, don't trust. Share, don't hoard."
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -33,6 +33,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Copy bot landing page
+        run: |
+          mkdir -p ./dist/bot-landing
+          cp ./bot-landing/index.html ./dist/bot-landing/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
