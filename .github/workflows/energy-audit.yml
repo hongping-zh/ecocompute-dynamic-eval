@@ -1,0 +1,46 @@
+name: EcoCompute Energy Audit
+
+on:
+  pull_request:
+    paths: ['**.py']
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  energy-audit:
+    runs-on: ubuntu-latest
+    name: Audit LLM Energy Efficiency
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore EcoCompute baseline
+        uses: actions/cache@v4
+        with:
+          path: .ecocompute
+          key: ecocompute-baseline-${{ runner.os }}
+          restore-keys: |
+            ecocompute-baseline-
+
+      - name: Run EcoCompute Energy Audit
+        id: audit
+        uses: ./action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          severity-threshold: warning
+          post-comment: 'true'
+          energy-threshold: '5'
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### ⚡ EcoCompute Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Issues found: ${{ steps.audit.outputs.issues-found }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical: ${{ steps.audit.outputs.critical-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Warnings: ${{ steps.audit.outputs.warning-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: ${{ steps.audit.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Hardware: ${{ steps.audit.outputs.hardware-hash }}" >> $GITHUB_STEP_SUMMARY
