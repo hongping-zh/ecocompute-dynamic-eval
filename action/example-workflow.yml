@@ -1,8 +1,8 @@
 # Example: Add this file to your repo at .github/workflows/energy-audit.yml
 #
 # This workflow runs the EcoCompute Energy Audit on every PR that touches
-# Python files. It scans for LLM energy waste patterns and posts a comment
-# with data-backed fixes.
+# Python files. It scans for LLM energy waste patterns, compares against
+# a cached baseline, and posts a comment with data-backed fixes.
 #
 # Learn more: https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/action
 
@@ -26,6 +26,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Cache baseline for relative change comparison
+      - name: Restore EcoCompute baseline
+        uses: actions/cache@v4
+        with:
+          path: .ecocompute
+          key: ecocompute-baseline-${{ runner.os }}
+          restore-keys: |
+            ecocompute-baseline-
+
       - name: Run EcoCompute Energy Audit
         id: audit
         uses: hongping-zh/ecocompute-dynamic-eval/action@main
@@ -33,6 +42,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           severity-threshold: warning
           post-comment: 'true'
+          energy-threshold: '5'     # fail if energy regresses >5%
+          # calibrate: 'true'       # uncomment on GPU runners
 
       - name: Summary
         if: always()
@@ -41,3 +52,30 @@ jobs:
           echo "- Issues found: ${{ steps.audit.outputs.issues-found }}" >> $GITHUB_STEP_SUMMARY
           echo "- Critical: ${{ steps.audit.outputs.critical-count }}" >> $GITHUB_STEP_SUMMARY
           echo "- Warnings: ${{ steps.audit.outputs.warning-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: ${{ steps.audit.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Hardware: ${{ steps.audit.outputs.hardware-hash }}" >> $GITHUB_STEP_SUMMARY
+
+# -------------------------------------------------------------------
+# Advanced: GPU runner with calibration enabled
+# -------------------------------------------------------------------
+# energy-audit-gpu:
+#   runs-on: [self-hosted, gpu]
+#   name: Audit LLM Energy (GPU)
+#   steps:
+#     - uses: actions/checkout@v4
+#       with:
+#         fetch-depth: 0
+#
+#     - name: Restore EcoCompute baseline
+#       uses: actions/cache@v4
+#       with:
+#         path: .ecocompute
+#         key: ecocompute-baseline-${{ runner.os }}-gpu
+#
+#     - name: Run EcoCompute Energy Audit
+#       id: audit
+#       uses: hongping-zh/ecocompute-dynamic-eval/action@main
+#       with:
+#         github-token: ${{ secrets.GITHUB_TOKEN }}
+#         calibrate: 'true'
+#         energy-threshold: '5'

@@ -16,10 +16,22 @@ import os
 import re
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 from typing import Optional
+
+# Add action directory to path for sibling imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from hardware import HardwareInfo, detect_gpu, format_hardware_section
+from calibrate import (
+    Baseline, CalibrationResult, RelativeChange,
+    calibrate, compute_relative_change, estimate_energy,
+    format_estimation, format_relative_change,
+    load_baseline, save_baseline,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -452,8 +464,15 @@ def get_all_python_files() -> list[str]:
 # Report generation
 # ---------------------------------------------------------------------------
 
-def generate_report(issues: list[Issue], files_scanned: int) -> str:
-    """Generate markdown audit report."""
+def generate_report(
+    issues: list[Issue],
+    files_scanned: int,
+    hw: Optional[HardwareInfo] = None,
+    cal: Optional[CalibrationResult] = None,
+    change: Optional[RelativeChange] = None,
+    baseline: Optional[Baseline] = None,
+) -> str:
+    """Generate markdown audit report with hardware info and relative changes."""
     critical = [i for i in issues if i.severity == Severity.CRITICAL]
     warnings = [i for i in issues if i.severity == Severity.WARNING]
     infos = [i for i in issues if i.severity == Severity.INFO]
@@ -461,6 +480,10 @@ def generate_report(issues: list[Issue], files_scanned: int) -> str:
     lines = []
     lines.append("## ⚡ EcoCompute Energy Audit")
     lines.append("")
+
+    # Hardware section
+    if hw:
+        lines.append(format_hardware_section(hw))
 
     if not issues:
         lines.append(
@@ -473,65 +496,68 @@ def generate_report(issues: list[Issue], files_scanned: int) -> str:
             "For deeper analysis (cost estimation, carbon footprint, optimization), "
             "try the [EcoCompute OpenClaw Skill](https://clawhub.ai/hongping-zh/ecocompute)."
         )
-        return '\n'.join(lines)
+    else:
+        issue_summary = []
+        if critical:
+            issue_summary.append(f"**{len(critical)}** critical")
+        if warnings:
+            issue_summary.append(f"**{len(warnings)}** warning(s)")
+        if infos:
+            issue_summary.append(f"**{len(infos)}** info")
 
-    issue_summary = []
-    if critical:
-        issue_summary.append(f"**{len(critical)}** critical")
-    if warnings:
-        issue_summary.append(f"**{len(warnings)}** warning(s)")
-    if infos:
-        issue_summary.append(f"**{len(infos)}** info")
-
-    lines.append(
-        f"Scanned **{files_scanned}** Python file(s). "
-        f"Found {', '.join(issue_summary)}."
-    )
-    lines.append("")
-
-    # Critical issues
-    if critical:
-        lines.append("### 🔴 Critical Issues")
+        lines.append(
+            f"Scanned **{files_scanned}** Python file(s). "
+            f"Found {', '.join(issue_summary)}."
+        )
         lines.append("")
-        for issue in critical:
-            loc = f"`{issue.file}`"
-            if issue.line:
-                loc += f" (line {issue.line})"
-            lines.append(f"**{issue.title}** — {loc}")
-            lines.append(f"> {issue.description}")
-            lines.append("")
-            lines.append(f"**Energy impact:** {issue.energy_impact}")
-            lines.append("")
-            lines.append(f"**Fix:** {issue.fix}")
-            lines.append("")
 
-    # Warnings
-    if warnings:
-        lines.append("### 🟡 Warnings")
-        lines.append("")
-        for issue in warnings:
-            loc = f"`{issue.file}`"
-            if issue.line:
-                loc += f" (line {issue.line})"
-            lines.append(f"**{issue.title}** — {loc}")
-            lines.append(f"> {issue.description}")
+        # Critical issues
+        if critical:
+            lines.append("### 🔴 Critical Issues")
             lines.append("")
-            lines.append(f"**Energy impact:** {issue.energy_impact}")
-            lines.append("")
-            lines.append(f"**Fix:** {issue.fix}")
-            lines.append("")
+            for issue in critical:
+                loc = f"`{issue.file}`"
+                if issue.line:
+                    loc += f" (line {issue.line})"
+                lines.append(f"**{issue.title}** — {loc}")
+                lines.append(f"> {issue.description}")
+                lines.append("")
+                lines.append(f"**Energy impact:** {issue.energy_impact}")
+                lines.append("")
+                lines.append(f"**Fix:** {issue.fix}")
+                lines.append("")
 
-    # Info
-    if infos:
-        lines.append("### 🟠 Info")
-        lines.append("")
-        for issue in infos:
-            loc = f"`{issue.file}`"
-            if issue.line:
-                loc += f" (line {issue.line})"
-            lines.append(f"**{issue.title}** — {loc}")
-            lines.append(f"> {issue.description}")
+        # Warnings
+        if warnings:
+            lines.append("### 🟡 Warnings")
             lines.append("")
+            for issue in warnings:
+                loc = f"`{issue.file}`"
+                if issue.line:
+                    loc += f" (line {issue.line})"
+                lines.append(f"**{issue.title}** — {loc}")
+                lines.append(f"> {issue.description}")
+                lines.append("")
+                lines.append(f"**Energy impact:** {issue.energy_impact}")
+                lines.append("")
+                lines.append(f"**Fix:** {issue.fix}")
+                lines.append("")
+
+        # Info
+        if infos:
+            lines.append("### 🟠 Info")
+            lines.append("")
+            for issue in infos:
+                loc = f"`{issue.file}`"
+                if issue.line:
+                    loc += f" (line {issue.line})"
+                lines.append(f"**{issue.title}** — {loc}")
+                lines.append(f"> {issue.description}")
+                lines.append("")
+
+    # Relative change section
+    if change:
+        lines.append(format_relative_change(change, baseline))
 
     # Footer
     lines.append("---")
@@ -622,7 +648,7 @@ def set_output(name: str, value: str):
 
 def main():
     print("=" * 60)
-    print("⚡ EcoCompute Energy Audit")
+    print("⚡ EcoCompute Energy Audit v2.0")
     print("   Based on 93+ measurements · 3 GPU architectures")
     print("   Skill: https://clawhub.ai/hongping-zh/ecocompute")
     print("=" * 60)
@@ -632,8 +658,42 @@ def main():
         Severity.WARNING,
     )
     post_comment = os.environ.get("POST_COMMENT", "true").lower() == "true"
+    do_calibrate = os.environ.get("CALIBRATE", "false").lower() == "true"
+    energy_threshold = float(os.environ.get("ENERGY_THRESHOLD", "5"))
+    baseline_path = os.environ.get("BASELINE_PATH", ".ecocompute/baseline.json")
 
-    # Get files to scan
+    # Override baseline path via env
+    if baseline_path:
+        os.environ["ECOCOMPUTE_BASELINE_PATH"] = baseline_path
+
+    # ── Phase 1: Hardware Detection ──
+    print("\n[1/4] Detecting hardware...")
+    hw = detect_gpu()
+    if hw.gpu_count > 0:
+        print(f"  GPU: {hw.gpu_name} ({hw.architecture})")
+        print(f"  VRAM: {hw.vram_total_mb / 1024:.1f} GB")
+        print(f"  Driver: {hw.driver_version}, CUDA: {hw.cuda_version}")
+        print(f"  Hardware hash: {hw.hardware_hash}")
+    else:
+        print("  No GPU detected — static analysis + estimation mode.")
+
+    # ── Phase 2: Calibration (optional) ──
+    cal = CalibrationResult(method="skipped")
+    if do_calibrate and hw.gpu_count > 0:
+        print("\n[2/4] Running calibration benchmark...")
+        cal = calibrate(hw)
+        print(f"  Method: {cal.method}")
+        if cal.benchmark_score > 0:
+            print(f"  Score: {cal.benchmark_score:.1f} TFLOPS")
+        if cal.power_draw_w > 0:
+            print(f"  Power: {cal.power_draw_w:.0f}W")
+        if cal.energy_per_tflop > 0:
+            print(f"  Energy/TFLOP: {cal.energy_per_tflop:.1f} J")
+    else:
+        print("\n[2/4] Calibration skipped.")
+
+    # ── Phase 3: Static Code Analysis ──
+    print("\n[3/4] Scanning code...")
     py_files = get_changed_python_files()
     scan_mode = "PR diff"
 
@@ -642,17 +702,12 @@ def main():
         scan_mode = "full scan"
 
     if not py_files:
-        print("No Python files found to scan.")
-        report = generate_report([], 0)
-        set_output("issues_found", "0")
-        set_output("critical_count", "0")
-        set_output("warning_count", "0")
-        return
+        print("  No Python files found to scan.")
+        py_files = []
 
-    print(f"\nScan mode: {scan_mode}")
-    print(f"Files to scan: {len(py_files)}")
+    print(f"  Scan mode: {scan_mode}")
+    print(f"  Files: {len(py_files)}")
 
-    # Run all detection rules on all files
     all_issues: list[Issue] = []
 
     for filepath in py_files:
@@ -664,7 +719,6 @@ def main():
             print(f"    Error reading {filepath}: {e}")
             continue
 
-        # Quick check: skip files with no quantization-related keywords
         keywords = [
             'BitsAndBytesConfig', 'load_in_8bit', 'load_in_4bit',
             'quantization_config', 'from_pretrained', '.generate(',
@@ -680,16 +734,51 @@ def main():
 
     # Filter by severity threshold
     filtered = [i for i in all_issues if i.severity >= severity_threshold]
-
-    # Sort: critical first, then warning, then info
     filtered.sort(key=lambda i: (-i.severity, i.file))
 
-    # Generate report
-    report = generate_report(filtered, len(py_files))
-
-    # Count by severity
     critical_count = len([i for i in filtered if i.severity == Severity.CRITICAL])
     warning_count = len([i for i in filtered if i.severity == Severity.WARNING])
+
+    # ── Phase 4: Relative Change Analysis ──
+    print("\n[4/4] Comparing against baseline...")
+    change = compute_relative_change(
+        current_issues=len(filtered),
+        current_critical=critical_count,
+        current_warning=warning_count,
+        hw=hw,
+        cal=cal,
+        threshold_pct=energy_threshold,
+    )
+    baseline = load_baseline(hw.hardware_hash)
+
+    if change.has_baseline:
+        print(f"  Baseline found: {baseline.commit_sha[:7] if baseline and baseline.commit_sha else 'unknown'}")
+        print(f"  Issues change: {change.issues_change:+d}")
+        print(f"  Status: {'PASSED' if change.passed else 'FAILED'}")
+    else:
+        print(f"  {change.reason}")
+
+    # Save current run as new baseline
+    current_baseline = Baseline(
+        hardware_hash=hw.hardware_hash,
+        gpu_name=hw.gpu_name,
+        timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        benchmark_score=cal.benchmark_score,
+        power_draw_w=cal.power_draw_w,
+        energy_per_tflop=cal.energy_per_tflop,
+        issues_found=len(filtered),
+        critical_count=critical_count,
+        warning_count=warning_count,
+        commit_sha=os.environ.get("GITHUB_SHA", "")[:12],
+        branch=os.environ.get("GITHUB_REF_NAME", ""),
+    )
+    save_baseline(current_baseline)
+
+    # ── Generate Report ──
+    report = generate_report(
+        filtered, len(py_files),
+        hw=hw, cal=cal, change=change, baseline=baseline,
+    )
 
     # Output
     print(f"\n{'=' * 60}")
@@ -697,6 +786,7 @@ def main():
     print(f"  Critical: {critical_count}")
     print(f"  Warning:  {warning_count}")
     print(f"  Info:     {len(filtered) - critical_count - warning_count}")
+    print(f"  Passed:   {change.passed}")
     print(f"{'=' * 60}\n")
     print(report)
 
@@ -704,6 +794,8 @@ def main():
     set_output("issues_found", str(len(filtered)))
     set_output("critical_count", str(critical_count))
     set_output("warning_count", str(warning_count))
+    set_output("passed", str(change.passed).lower())
+    set_output("hardware_hash", hw.hardware_hash)
 
     # Save report to file
     report_file = os.environ.get("GITHUB_WORKSPACE", ".") + "/ecocompute-audit-report.md"
@@ -719,8 +811,11 @@ def main():
     if post_comment and os.environ.get("GITHUB_EVENT_PATH"):
         post_pr_comment(report)
 
-    # Exit with failure if critical issues found (optional CI gate)
-    if critical_count > 0:
+    # Exit with failure if critical issues or regression threshold exceeded
+    if not change.passed:
+        print(f"\n❌ Audit FAILED: {change.reason}")
+        sys.exit(1)
+    elif critical_count > 0:
         print(f"\n❌ {critical_count} critical issue(s) found. See report above.")
         sys.exit(1)
 

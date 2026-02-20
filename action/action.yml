@@ -19,6 +19,18 @@ inputs:
     description: 'Whether to post audit results as a PR comment (true/false)'
     required: false
     default: 'true'
+  calibrate:
+    description: 'Run GPU calibration benchmark to establish energy baseline (true/false)'
+    required: false
+    default: 'false'
+  energy-threshold:
+    description: 'Max allowed energy regression % before CI fails (e.g. 5 means +5%)'
+    required: false
+    default: '5'
+  baseline-path:
+    description: 'Path to store/load baseline file (relative to workspace)'
+    required: false
+    default: '.ecocompute/baseline.json'
 
 outputs:
   issues-found:
@@ -30,6 +42,12 @@ outputs:
   warning-count:
     description: 'Number of warnings'
     value: ${{ steps.audit.outputs.warning_count }}
+  passed:
+    description: 'Whether the audit passed (no regressions beyond threshold)'
+    value: ${{ steps.audit.outputs.passed }}
+  hardware-hash:
+    description: 'Hardware hash for cache key isolation'
+    value: ${{ steps.audit.outputs.hardware_hash }}
   report:
     description: 'Full audit report in Markdown'
     value: ${{ steps.audit.outputs.report_file }}
@@ -49,5 +67,9 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SEVERITY_THRESHOLD: ${{ inputs.severity-threshold }}
         POST_COMMENT: ${{ inputs.post-comment }}
+        CALIBRATE: ${{ inputs.calibrate }}
+        ENERGY_THRESHOLD: ${{ inputs.energy-threshold }}
+        BASELINE_PATH: ${{ inputs.baseline-path }}
         ACTION_PATH: ${{ github.action_path }}
+        PYTHONPATH: ${{ github.action_path }}
       run: python "${{ github.action_path }}/audit.py"
