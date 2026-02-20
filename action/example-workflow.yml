@@ -1,0 +1,43 @@
+# Example: Add this file to your repo at .github/workflows/energy-audit.yml
+#
+# This workflow runs the EcoCompute Energy Audit on every PR that touches
+# Python files. It scans for LLM energy waste patterns and posts a comment
+# with data-backed fixes.
+#
+# Learn more: https://github.com/hongping-zh/ecocompute-dynamic-eval/tree/main/action
+
+name: EcoCompute Energy Audit
+
+on:
+  pull_request:
+    paths: ['**.py']
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  energy-audit:
+    runs-on: ubuntu-latest
+    name: Audit LLM Energy Efficiency
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run EcoCompute Energy Audit
+        id: audit
+        uses: hongping-zh/ecocompute-dynamic-eval/action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          severity-threshold: warning
+          post-comment: 'true'
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### ⚡ EcoCompute Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Issues found: ${{ steps.audit.outputs.issues-found }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical: ${{ steps.audit.outputs.critical-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Warnings: ${{ steps.audit.outputs.warning-count }}" >> $GITHUB_STEP_SUMMARY

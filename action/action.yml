@@ -1,0 +1,53 @@
+name: 'EcoCompute Energy Audit'
+description: 'Auto-audit Python code for LLM energy waste patterns. Based on 93+ real GPU measurements across 3 NVIDIA architectures. Detects INT8 paradox, NF4 small-model penalty, BS=1 waste, and more.'
+author: 'Hongping Zhang'
+
+branding:
+  icon: 'zap'
+  color: 'green'
+
+inputs:
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+  severity-threshold:
+    description: 'Minimum severity to report: critical, warning, or info'
+    required: false
+    default: 'warning'
+  post-comment:
+    description: 'Whether to post audit results as a PR comment (true/false)'
+    required: false
+    default: 'true'
+
+outputs:
+  issues-found:
+    description: 'Total number of issues found'
+    value: ${{ steps.audit.outputs.issues_found }}
+  critical-count:
+    description: 'Number of critical issues'
+    value: ${{ steps.audit.outputs.critical_count }}
+  warning-count:
+    description: 'Number of warnings'
+    value: ${{ steps.audit.outputs.warning_count }}
+  report:
+    description: 'Full audit report in Markdown'
+    value: ${{ steps.audit.outputs.report_file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Run EcoCompute Energy Audit
+      id: audit
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SEVERITY_THRESHOLD: ${{ inputs.severity-threshold }}
+        POST_COMMENT: ${{ inputs.post-comment }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: python "${{ github.action_path }}/audit.py"
