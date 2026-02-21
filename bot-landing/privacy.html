@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — EcoCompute Energy Auditor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+  <nav class="border-b border-slate-100 py-4">
+    <div class="max-w-3xl mx-auto px-6 flex items-center gap-2">
+      <span class="text-2xl">⚡</span>
+      <a href="./" class="font-bold text-lg bg-gradient-to-r from-green-500 to-green-700 bg-clip-text text-transparent">EcoCompute</a>
+    </div>
+  </nav>
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-extrabold mb-2">Privacy Policy</h1>
+    <p class="text-sm text-slate-400 mb-8">Last updated: February 21, 2026</p>
+
+    <div class="prose prose-slate max-w-none space-y-6 text-sm leading-relaxed text-slate-600">
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">1. What We Collect</h2>
+        <p>The EcoCompute Energy Auditor GitHub App accesses <strong>only the diff (changed lines) of Pull Requests</strong> in repositories where you have installed the App. Specifically:</p>
+        <ul class="list-disc pl-5 space-y-1 mt-2">
+          <li><strong>PR diff content</strong> — the code changes in the Pull Request (read-only)</li>
+          <li><strong>PR metadata</strong> — PR number, repository name, author (to post comments)</li>
+        </ul>
+        <p class="mt-3">We do <strong>NOT</strong> access:</p>
+        <ul class="list-disc pl-5 space-y-1 mt-2">
+          <li>Your full repository source code</li>
+          <li>Issues, wikis, or other repository content</li>
+          <li>Personal information, emails, or profile data</li>
+          <li>Any data from repositories where the App is not installed</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">2. How We Use Data</h2>
+        <p>PR diff content is analyzed <strong>in real-time</strong> to detect LLM energy waste patterns (e.g., default INT8 misconfiguration, batch size inefficiencies). The analysis result is posted as a comment on the PR.</p>
+        <p class="mt-2"><strong>No code is stored, logged, or transmitted to any external service.</strong> All processing happens within the GitHub Actions environment.</p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">3. Data Retention</h2>
+        <p>We retain <strong>zero</strong> user data. PR diffs are processed in memory and discarded immediately after the audit comment is posted. No database, no logs, no analytics.</p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">4. Third-Party Services</h2>
+        <p>The App interacts only with the <strong>GitHub API</strong> to read PR diffs and post comments. No data is sent to any other third-party service.</p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">5. Open Source</h2>
+        <p>The App's source code is fully open source. You can audit exactly what the App does:</p>
+        <p class="mt-2"><a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" class="text-green-600 underline underline-offset-2 hover:text-green-800">github.com/hongping-zh/ecocompute-dynamic-eval</a></p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">6. Permissions</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Contents: read</strong> — to read PR diffs</li>
+          <li><strong>Pull requests: write</strong> — to post audit comments</li>
+          <li><strong>Metadata: read</strong> — required by GitHub</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">7. Changes to This Policy</h2>
+        <p>We may update this policy from time to time. Changes will be posted on this page with an updated date.</p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mt-8 mb-3">8. Contact</h2>
+        <p>Questions? Open an issue at <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval/issues" class="text-green-600 underline underline-offset-2 hover:text-green-800">github.com/hongping-zh/ecocompute-dynamic-eval/issues</a> or reach out to <strong>Hongping Zhang</strong> on GitHub.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="border-t border-slate-100 py-6 mt-12">
+    <div class="max-w-3xl mx-auto px-6 text-center text-xs text-slate-400">
+      <a href="./" class="hover:text-slate-600">Home</a> · <a href="./terms.html" class="hover:text-slate-600">Terms of Service</a> · <a href="https://github.com/hongping-zh/ecocompute-dynamic-eval" class="hover:text-slate-600">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
