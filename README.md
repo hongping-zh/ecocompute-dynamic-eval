@@ -11,6 +11,9 @@
 [![Discussions](https://img.shields.io/github/discussions/hongping-zh/ecocompute-dynamic-eval)](https://github.com/hongping-zh/ecocompute-dynamic-eval/discussions)
 [![Issues](https://img.shields.io/github/issues/hongping-zh/ecocompute-dynamic-eval)](https://github.com/hongping-zh/ecocompute-dynamic-eval/issues)
 [![Cite](https://img.shields.io/badge/Cite-BibTeX-blue.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/blob/main/CITATION.cff)
+[![Featured in HF Optimum](https://img.shields.io/badge/Featured%20in-🤗%20HuggingFace%20Optimum%20Docs-FFD21E)](https://huggingface.co/docs/optimum/concept_guides/quantization)
+[![HF Dataset](https://img.shields.io/badge/🤗%20Dataset-ecocompute--energy--efficiency-blue)](https://huggingface.co/datasets/hongpingzhang/ecocompute-energy-efficiency)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.18900289-blue)](https://zenodo.org/records/18900289)
 
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by **17–147%** due to mixed-precision decomposition. Disabling this pathway recovers **+79–98% throughput** and **−35–41% energy** across consumer (RTX 4090D) and datacenter (A800) GPUs.
 
