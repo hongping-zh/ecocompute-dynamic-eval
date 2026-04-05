@@ -10,7 +10,10 @@ import { AITools } from './components/AITools';
 import { BatchSizeAnalysis } from './components/BatchSizeAnalysis';
 import { ResearchBackground } from './components/ResearchBackground';
 import { EnergyAuditor } from './components/EnergyAuditor';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info, Bot, Zap } from 'lucide-react';
+import ExecutiveSummary from './components/ExecutiveSummary';
+import InteractiveCharts from './components/InteractiveCharts';
+import RecommendationEngine from './components/RecommendationEngine';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info, Bot, Zap, BarChart3, TrendingUp, Lightbulb } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -145,6 +148,30 @@ const App: React.FC = () => {
             <span className="hidden lg:block font-medium">About</span>
           </button>
 
+          <button 
+            onClick={() => navigateToView(AppView.EXECUTIVE_SUMMARY)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.EXECUTIVE_SUMMARY ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <Lightbulb className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Executive Summary <span className='text-[10px] ml-1 px-1.5 py-0.5 bg-amber-400/30 rounded-full'>NEW</span></span>
+          </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.INTERACTIVE_CHARTS)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.INTERACTIVE_CHARTS ? 'bg-cyan-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <BarChart3 className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Interactive Charts <span className='text-[10px] ml-1 px-1.5 py-0.5 bg-cyan-400/30 rounded-full'>NEW</span></span>
+          </button>
+
+          <button 
+            onClick={() => navigateToView(AppView.RECOMMENDATION_ENGINE)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.RECOMMENDATION_ENGINE ? 'bg-violet-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <TrendingUp className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Recommend Engine <span className='text-[10px] ml-1 px-1.5 py-0.5 bg-violet-400/30 rounded-full'>NEW</span></span>
+          </button>
+
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-3">
@@ -194,6 +221,9 @@ const App: React.FC = () => {
                     {view === AppView.BATCH_SIZE && 'Batch Size Optimization'}
                     {view === AppView.ENERGY_AUDITOR && 'Energy Auditor Bot'}
                     {view === AppView.RESEARCH_BACKGROUND && 'Research Background'}
+                    {view === AppView.EXECUTIVE_SUMMARY && 'Executive Summary'}
+                    {view === AppView.INTERACTIVE_CHARTS && 'Interactive Energy Charts'}
+                    {view === AppView.RECOMMENDATION_ENGINE && 'Optimization Recommender'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
@@ -204,6 +234,9 @@ const App: React.FC = () => {
                     {view === AppView.BATCH_SIZE && 'A800 + Mistral-7B + Pure INT8: 95.7% energy reduction across batch sizes 1–64.'}
                     {view === AppView.ENERGY_AUDITOR && 'Free GitHub Bot — auto-audits PRs for LLM energy waste. Install in 30 seconds.'}
                     {view === AppView.RESEARCH_BACKGROUND && 'Motivation, methodology, related work, and core contributions.'}
+                    {view === AppView.EXECUTIVE_SUMMARY && 'Key findings from GPU power measurements for quantized LLM inference.'}
+                    {view === AppView.INTERACTIVE_CHARTS && 'Interactive energy consumption and accuracy trade-off visualizations.'}
+                    {view === AppView.RECOMMENDATION_ENGINE && 'Get personalized quantization recommendations based on your requirements.'}
                 </p>
             </div>
             
@@ -232,6 +265,9 @@ const App: React.FC = () => {
             {view === AppView.BATCH_SIZE && <BatchSizeAnalysis />}
             {view === AppView.ENERGY_AUDITOR && <EnergyAuditor />}
             {view === AppView.RESEARCH_BACKGROUND && <ResearchBackground />}
+            {view === AppView.EXECUTIVE_SUMMARY && <ExecutiveSummary />}
+            {view === AppView.INTERACTIVE_CHARTS && <InteractiveCharts />}
+            {view === AppView.RECOMMENDATION_ENGINE && <RecommendationEngine />}
         </div>
       </main>
 
