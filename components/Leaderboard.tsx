@@ -72,6 +72,13 @@ interface LeaderboardProps {
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTemplate }) => {
   const [models, setModels] = useState<ModelData[]>(INITIAL_MODELS);
+
+  // Log initial models
+  useEffect(() => {
+    console.log('INITIAL_MODELS count:', INITIAL_MODELS.length);
+    const t4Models = INITIAL_MODELS.filter(m => m.tags.includes('t4-verified'));
+    console.log('T4 models:', t4Models.map(m => m.name));
+  }, []);
   const [sortField, setSortField] = useState<SortField>('accuracy');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -80,6 +87,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   const [isLive, setIsLive] = useState(false);
   const [rtx5090Only, setRtx5090Only] = useState(false);
   const [a800Only, setA800Only] = useState(false);
+  const [t4Only, setT4Only] = useState(false);
   const [showWeights, setShowWeights] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelData | null>(null);
   const [weights, setWeights] = useState({
@@ -89,6 +97,25 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
     carbonImpact: 15,
     energyEfficiency: 15,
   });
+
+  // Support URL parameter for filtering
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const filterParam = params.get('filter');
+    if (filterParam === 't4') {
+      setT4Only(true);
+      setRtx5090Only(false);
+      setA800Only(false);
+    } else if (filterParam === 'rtx5090') {
+      setRtx5090Only(true);
+      setA800Only(false);
+      setT4Only(false);
+    } else if (filterParam === 'a800') {
+      setA800Only(true);
+      setRtx5090Only(false);
+      setT4Only(false);
+    }
+  }, []);
 
   // Dynamic Data Simulation
   useEffect(() => {
@@ -126,10 +153,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
   };
 
   const visibleModels = useMemo(() => {
-    if (rtx5090Only) return models.filter(m => m.tags.includes('rtx5090-verified'));
-    if (a800Only) return models.filter(m => m.tags.includes('a800-verified'));
-    return models;
-  }, [models, rtx5090Only, a800Only]);
+    let filtered = models;
+    if (rtx5090Only) filtered = models.filter(m => m.tags.includes('rtx5090-verified'));
+    if (a800Only) filtered = models.filter(m => m.tags.includes('a800-verified'));
+    if (t4Only) filtered = models.filter(m => m.tags.includes('t4-verified'));
+    console.log('visibleModels:', filtered.map(m => m.name));
+    return filtered;
+  }, [models, rtx5090Only, a800Only, t4Only]);
 
   // Composite score: normalize each metric 0-1 then weighted sum
   const compositeScores = useMemo(() => {
@@ -263,18 +293,41 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ apiConfig, onOpenTempl
           
           <button
             onClick={() => {
-              if (!rtx5090Only && !a800Only) { setRtx5090Only(true); setA800Only(false); }
-              else if (rtx5090Only) { setRtx5090Only(false); setA800Only(true); }
-              else { setRtx5090Only(false); setA800Only(false); }
+              console.log('Filter button clicked', { rtx5090Only, a800Only, t4Only });
+              if (!rtx5090Only && !a800Only && !t4Only) {
+                console.log('Setting RTX 5090 Only');
+                setRtx5090Only(true); setA800Only(false); setT4Only(false);
+              }
+              else if (rtx5090Only) {
+                console.log('Setting A800 Only');
+                setRtx5090Only(false); setA800Only(true); setT4Only(false);
+              }
+              else if (a800Only) {
+                console.log('Setting T4 Only');
+                setA800Only(false); setT4Only(true);
+              }
+              else {
+                console.log('Setting All Models');
+                setRtx5090Only(false); setA800Only(false); setT4Only(false);
+              }
             }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+              t4Only ? 'bg-purple-50 border-purple-300 text-purple-600' :
               a800Only ? 'bg-orange-50 border-orange-300 text-orange-600' :
               rtx5090Only ? 'bg-green-50 border-green-300 text-green-700' :
               'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
             }`}
           >
             <Filter className="w-4 h-4" />
-            {rtx5090Only ? 'RTX 5090 Only' : a800Only ? 'A800 Batch Size' : 'All Models'}
+            {rtx5090Only ? 'RTX 5090 Only' : a800Only ? 'A800 Batch Size' : t4Only ? 'Tesla T4 Only' : 'All Models'}
+          </button>
+
+          {/* Test button */}
+          <button
+            onClick={() => console.log('TEST BUTTON CLICKED!')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100"
+          >
+            Test Click
           </button>
 
           <button

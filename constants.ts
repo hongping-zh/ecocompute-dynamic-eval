@@ -377,6 +377,63 @@ export const INITIAL_MODELS: ModelData[] = [
     }
   },
 
+  // ========== Tesla T4 Benchmark Data (Real Data, 2026-04-17) ==========
+  // Qwen2.5-3B-Instruct
+  {
+    id: 'qwen2.5-3b-t4-fp16',
+    name: 'Qwen2.5-3B-Instruct (FP16)',
+    provider: 'Tesla T4 Benchmark',
+    accuracy: 86.7,
+    executionTime: 0.0165,  // 1000/60.79
+    cost: 0.00031,
+    carbonImpact: 0.122,    // 0.220 J/1k * 0.4 / 3600 * 1000
+    energyEfficiency: 276,  // 60.79 / 220 * 1000
+    tags: ['fp16', 'medium', 't4-verified'],
+    provenance: {
+      source: 'EcoCompute Tesla T4 Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on Tesla T4 via PyTorch, Batch size 8. NVML power monitoring, 10 iterations.',
+      lastVerified: '2026-04-17',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'qwen2.5-3b-t4-nf4',
+    name: 'Qwen2.5-3B-Instruct (NF4) ⚠️',
+    provider: 'Tesla T4 Benchmark',
+    accuracy: 84.1,
+    executionTime: 0.0128,  // 1000/77.88
+    cost: 0.00040,
+    carbonImpact: 0.159,    // 0.286 J/1k - 30.0% MORE energy!
+    energyEfficiency: 272,  // 77.88 / 286 * 1000
+    tags: ['4bit', 'quantized', 'inefficient', 't4-verified'],
+    provenance: {
+      source: 'EcoCompute Tesla T4 Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on Tesla T4. NF4 uses 30.0% MORE energy than FP16 for 3B model. Not recommended for small models.',
+      lastVerified: '2026-04-17',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+  {
+    id: 'qwen2.5-3b-t4-int8',
+    name: 'Qwen2.5-3B-Instruct (INT8) ⚠️',
+    provider: 'Tesla T4 Benchmark',
+    accuracy: 85.2,
+    executionTime: 0.0132,  // 1000/75.99
+    cost: 0.00042,
+    carbonImpact: 0.164,    // 0.296 J/1k - 34.5% MORE energy!
+    energyEfficiency: 257,  // 75.99 / 296 * 1000
+    tags: ['8bit', 'quantized', 'inefficient', 't4-verified'],
+    provenance: {
+      source: 'EcoCompute Tesla T4 Benchmark',
+      confidence: 'measured',
+      methodology: 'Direct measurement on Tesla T4. INT8 uses 34.5% MORE energy than FP16 for 3B model. Not recommended for small models.',
+      lastVerified: '2026-04-17',
+      citation: 'https://github.com/hongping-zh/ecocompute-ai'
+    }
+  },
+
   // ========== A800 Batch Size Experiment (Real Data, 2026-02-15) ==========
   // Mistral-7B-Instruct-v0.2, Pure INT8 (threshold=0.0), 7 batch sizes
   {
@@ -725,6 +782,7 @@ export const INITIAL_MODELS: ModelData[] = [
 export const HARDWARE_OPTIONS = [
   { value: 'rtx5090', label: 'NVIDIA RTX 5090 (575W) ⭐ Benchmarked', power: 575 },
   { value: 'rtx4090d', label: 'NVIDIA RTX 4090D (425W) ⭐ Benchmarked', power: 425 },
+  { value: 'tesla-t4', label: 'NVIDIA Tesla T4 (70W) ⭐ Benchmarked', power: 70 },
   { value: 'h100', label: 'NVIDIA H100 (700W)', power: 700 },
   { value: 'a100', label: 'NVIDIA A100 (400W)', power: 400 },
   { value: 'v100', label: 'NVIDIA V100 (300W)', power: 300 },
@@ -733,7 +791,7 @@ export const HARDWARE_OPTIONS = [
 ];
 
 // ============================================================
-// KEY FINDINGS FROM RTX 5090 & RTX 4090D BENCHMARKS
+// KEY FINDINGS FROM RTX 5090, RTX 4090D & Tesla T4 BENCHMARKS
 // ============================================================
 // RTX 5090 (Small Models):
 // 1. 4-bit quantization ONLY saves energy for models > 5B params
@@ -749,5 +807,11 @@ export const HARDWARE_OPTIONS = [
 // 9. Phi-3-mini NF4: -8.1% energy | INT8: +31.2% energy
 // 10. Qwen2.5-7B NF4: -32.7% energy | INT8: +17.4% energy
 //
-// RECOMMENDATION: Use NF4 for 6B+ models, avoid INT8
+// Tesla T4 (3B Model - Qwen2.5-3B):
+// 11. NF4 uses 30.0% MORE energy than FP16 for 3B model
+// 12. INT8 uses 34.5% MORE energy than FP16 for 3B model
+// 13. Confirms crossover threshold: quantization inefficient for <3.4B models
+// 14. Tesla T4 (70W) shows same pattern as higher-end GPUs
+//
+// RECOMMENDATION: Use NF4 for 6B+ models, avoid INT8. For <3B models, use FP16.
 // ============================================================

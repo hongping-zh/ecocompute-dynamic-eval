@@ -9,11 +9,12 @@ import { DeepSeekVsGpt } from './components/DeepSeekVsGpt';
 import { AITools } from './components/AITools';
 import { BatchSizeAnalysis } from './components/BatchSizeAnalysis';
 import { ResearchBackground } from './components/ResearchBackground';
+import ImpactRecognition from './components/ImpactRecognition';
 import { EnergyAuditor } from './components/EnergyAuditor';
 import ExecutiveSummary from './components/ExecutiveSummary';
 import InteractiveCharts from './components/InteractiveCharts';
 import RecommendationEngine from './components/RecommendationEngine';
-import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info, Bot, Zap, BarChart3, TrendingUp, Lightbulb } from 'lucide-react';
+import { LayoutGrid, Calculator as CalcIcon, Activity, Leaf, Settings, Github, BookOpen, Scale, Mail, Layers, Info, Bot, Zap, BarChart3, TrendingUp, Lightbulb, Award } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LEADERBOARD);
@@ -149,6 +150,14 @@ const App: React.FC = () => {
           </button>
 
           <button 
+            onClick={() => navigateToView(AppView.IMPACT_RECOGNITION)}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.IMPACT_RECOGNITION ? 'bg-eco-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <Award className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block font-medium">Impact &amp; Recognition</span>
+          </button>
+
+          <button 
             onClick={() => navigateToView(AppView.EXECUTIVE_SUMMARY)}
             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${view === AppView.EXECUTIVE_SUMMARY ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
           >
@@ -224,6 +233,7 @@ const App: React.FC = () => {
                     {view === AppView.EXECUTIVE_SUMMARY && 'Executive Summary'}
                     {view === AppView.INTERACTIVE_CHARTS && 'Interactive Energy Charts'}
                     {view === AppView.RECOMMENDATION_ENGINE && 'Optimization Recommender'}
+                    {view === AppView.IMPACT_RECOGNITION && 'Impact & Recognition'}
                 </h1>
                 <p className="text-slate-500 text-sm">
                     {view === AppView.LEADERBOARD && 'Compare dynamic performance metrics across models.'}
@@ -237,6 +247,7 @@ const App: React.FC = () => {
                     {view === AppView.EXECUTIVE_SUMMARY && 'Key findings from GPU power measurements for quantized LLM inference.'}
                     {view === AppView.INTERACTIVE_CHARTS && 'Interactive energy consumption and accuracy trade-off visualizations.'}
                     {view === AppView.RECOMMENDATION_ENGINE && 'Get personalized quantization recommendations based on your requirements.'}
+                    {view === AppView.IMPACT_RECOGNITION && 'ORCID, Zenodo DOI, MLCommons proposal, and Hugging Face Optimum integration.'}
                 </p>
             </div>
             
@@ -268,6 +279,7 @@ const App: React.FC = () => {
             {view === AppView.EXECUTIVE_SUMMARY && <ExecutiveSummary />}
             {view === AppView.INTERACTIVE_CHARTS && <InteractiveCharts />}
             {view === AppView.RECOMMENDATION_ENGINE && <RecommendationEngine />}
+            {view === AppView.IMPACT_RECOGNITION && <ImpactRecognition />}
         </div>
       </main>
 
