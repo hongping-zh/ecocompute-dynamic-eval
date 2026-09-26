@@ -13,7 +13,7 @@
 [![Cite](https://img.shields.io/badge/Cite-BibTeX-blue.svg)](https://github.com/hongping-zh/ecocompute-dynamic-eval/blob/main/CITATION.cff)
 [![Featured in HF Optimum](https://img.shields.io/badge/Featured%20in-🤗%20HuggingFace%20Optimum%20Docs-FFD21E)](https://huggingface.co/docs/optimum/concept_guides/quantization)
 [![HF Dataset](https://img.shields.io/badge/🤗%20Dataset-ecocompute--energy--efficiency-blue)](https://huggingface.co/datasets/hongpingzhang/ecocompute-energy-efficiency)
-[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.18900289-blue)](https://zenodo.org/records/18900289)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.19647290-blue)](https://zenodo.org/records/19647290)
 
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by **17–147%** due to mixed-precision decomposition. Disabling this pathway recovers **+79–98% throughput** and **−35–41% energy** across consumer (RTX 4090D) and datacenter (A800) GPUs.
 
@@ -372,7 +372,10 @@ If you use this dataset or findings in your research, please cite:
   year={2026},
   institution={Independent Research},
   url={https://github.com/hongping-zh/ecocompute-dynamic-eval},
-  note={93+ measurements across RTX 5090 Blackwell, RTX 4090D Ada Lovelace, and A800 Ampere}
+  note={93+ measurements across RTX 5090 Blackwell, RTX 4090D Ada Lovelace, and A800 Ampere.
+        For the current benchmark dataset (360+ configurations, four architectures,
+        Zenodo v1.1.0), cite DOI 10.5281/zenodo.19647290 instead — this repository's
+        93+ measurements are an earlier subset}
 }
 ```
 
