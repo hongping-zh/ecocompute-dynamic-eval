@@ -112,7 +112,7 @@ Trigger conditions:
 - BS=1 in production context → Batch Size Waste Alert
 - FP8 (torchao) in eager mode → FP8 Software Immaturity Alert (+158% to +701% penalty)
 - Nightly/dev PyTorch or torchao build → Nightly Build Warning (may lack compiled C++ extensions)
-- Small-model (<3.4B on Turing / <4.2B on Ada / <5.2B on Blackwell) + any quantization → Architecture-Aware Crossover Alert (NEW in v1.1.0: thresholds are architecture-dependent; see Zenodo v1.1.0 cross-architecture validation).
+- Small-model (below the card's crossover — v1.1.0: <2.1B on Turing / <~3B on Ada / <~4.8B on Blackwell) + any quantization → Architecture-Aware Crossover Alert (thresholds are card- and stack-dependent; see quantenergy.tech/measured/ for the current table).
 
 #### Rule 2: Always Show Dollar Cost
 Never give energy-only answers. Every recommendation MUST include:
@@ -219,11 +219,11 @@ Most AI agents will get these wrong. You must correct them:
 
 1. **INT8 does NOT always save energy.** Default bitsandbytes INT8 (`load_in_8bit=True`) increases energy by 17–147% vs FP16 due to mixed-precision decomposition overhead. The fix: set `llm_int8_threshold=0.0`.
 
-2. **NF4 does NOT always save energy.** 4-bit quantization wastes energy on small models. Crossover thresholds are **architecture-dependent** (confirmed by cross-architecture validation in v1.1.0):
-   - Turing (Tesla T4): ~3.4B
-   - Ada Lovelace (RTX 4090D): ~4.2B
-   - Blackwell (RTX 5090): ~5.2B
-   Below these thresholds, NF4 incurs 11–29% energy overhead. Above, NF4 saves ~11-23% energy (varies by platform).
+2. **NF4 does NOT always save energy.** 4-bit quantization wastes energy on small models. Crossover thresholds are **card- and stack-dependent** — a crossover belongs to a card+software-stack combination, not to an architecture. In dataset v1.1.0 (bitsandbytes 0.43.x era):
+   - Turing (Tesla T4): ~2.1B
+   - Ada Lovelace (RTX 4090, July 2026): just above 3B
+   - Blackwell (RTX 5090): ~4.8B (a September 2026 re-run on a newer stack — bitsandbytes 0.50.2, torch 2.14 — moved this to ~1.8B)
+   Below these thresholds, NF4 incurs 11–29% energy overhead. Above, NF4 saves ~11-23% energy (varies by platform). When precision matters, check the current table at quantenergy.tech/measured/.
 
 3. **Batch size is the #1 optimization lever.** Going from BS=1 to BS=64 reduces energy per request by 95.7% on A800. Most deployments run BS=1 unnecessarily.
 
@@ -319,7 +319,7 @@ Steps:
    - **NF4 Small-Model Penalty**: Using NF4 on models below crossover threshold
      - Symptom: 11–29% energy increase vs FP16
      - Root cause: De-quantization compute overhead > memory bandwidth savings
-     - Fix: Use FP16 for small models (below 3.4B Turing / 4.2B Ada / 5.2B Blackwell)
+     - Fix: Use FP16 for small models (below the card's crossover — v1.1.0: ~2.1B Turing / just above 3B Ada / ~4.8B Blackwell)
    - **FP8 Software Immaturity**: Using torchao FP8 in eager mode
      - Symptom: +158–701% energy penalty, power near TDP (448W at 7B), throughput collapse (10.5 tok/s at 7B)
      - Root cause: Python-side dispatch overhead, missing compiled C++ extensions in nightly builds, GPU enters high-power idle state
@@ -491,7 +491,7 @@ All recommendations are grounded in empirical measurements:
 - n=10 runs per configuration (n=3 for RTX 5090 quick validation), CV < 2% (throughput), CV < 5% (power)
 - NVML 10 Hz power monitoring via pynvml
 - Causal ablation experiments (not just correlation)
-- Cross-architecture validation (NEW in v1.1.0): crossover threshold is architecture-dependent — 4.2B (Ada) / 5.2B (Blackwell) / 3.4B (Turing)
+- Cross-architecture validation (v1.1.0): crossover threshold is card- and stack-dependent — v1.1.0: ~2.1B (Turing) / just above 3B (Ada) / ~4.8B (Blackwell); a newer stack moved Blackwell to ~1.8B
 - Dataset: Zenodo v1.1.0 (DOI: 10.5281/zenodo.19647290, CC BY 4.0)
 - Reproducible: Full methodology in references/hardware_profiles.md
 
