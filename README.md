@@ -418,6 +418,9 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
+- **@gkgoing** for the first independent replication (2026-08), confirming the NF4 crossover on RTX 4090D
+- **@amarjithkumar2007-wq** for AMD GPU (ROCm) detection and context_length fixes in ecocompute-mlcube
+- **@yesheng-oss** for the backend contribution guide
 - **AutoDL** for providing GPU cloud infrastructure
 - **HuggingFace** for model hosting and transformers library
 - **bitsandbytes** team for quantization library (and inspiring this research!)
