@@ -14,6 +14,7 @@
 [![Featured in HF Optimum](https://img.shields.io/badge/Featured%20in-🤗%20HuggingFace%20Optimum%20Docs-FFD21E)](https://huggingface.co/docs/optimum/concept_guides/quantization)
 [![HF Dataset](https://img.shields.io/badge/🤗%20Dataset-ecocompute--energy--efficiency-blue)](https://huggingface.co/datasets/hongpingzhang/ecocompute-energy-efficiency)
 [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.19647290-blue)](https://zenodo.org/records/19647290)
+[![Measured with](https://img.shields.io/badge/Measured%20with-ecocompute--mlcube-8b5cf6)](https://github.com/hongping-zh/ecocompute-mlcube)
 
 > **Breakthrough Finding**: bitsandbytes INT8 increases energy by **17–147%** due to mixed-precision decomposition. Disabling this pathway recovers **+79–98% throughput** and **−35–41% energy** across consumer (RTX 4090D) and datacenter (A800) GPUs.
 
@@ -21,7 +22,7 @@
 
 > **Research Scope**: This work focuses on energy efficiency diagnosis. Accuracy assessment (perplexity, downstream tasks) is not yet complete. Pure INT8 (`threshold=0.0`) shows major performance gains, but accuracy impact requires validation. Next steps: PPL and MMLU evaluation—contributions welcome!
 
-Compare AI models by **Accuracy × Cost × Carbon** across **3 GPU architectures** (RTX 5090, RTX 4090D, A800) — revealing that 4-bit quantization wastes energy on small models.
+Compare AI models by **Accuracy × Cost × Carbon** across **3 GPU architectures** (RTX 5090, RTX 4090D, A800) — revealing that 4-bit quantization wastes energy on small models. All measurements use the direct NVML power-sampling methodology packaged by **[ecocompute-mlcube](https://github.com/hongping-zh/ecocompute-mlcube)** — reproduce them on your own GPU.
 
 ---
 
